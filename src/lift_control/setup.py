@@ -21,6 +21,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            "client = lift_control.client:main",
+            "control = lift_control.lift_control:main",
         ],
     },
 )
