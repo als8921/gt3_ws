@@ -1,4 +1,6 @@
-def normalize_angle(angle):
+import math
+posX, posY = 0, 0
+def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180
 
 
@@ -18,4 +20,14 @@ def ControlMission(x_d, y_d, theta_d):
     2. 목표 좌표까지 이동
     3. 목표 각도로 회전
     """
+    Rotate()
+    MoveForward()
+    Rotate()
+    pass
+
+
+def MoveForward(distance):
+    pass
+
+def Rotate(theta):
     pass
