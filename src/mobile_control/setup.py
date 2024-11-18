@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             "twist_transform = mobile_control.CtrlCmdtoTwist:main",
             "control = mobile_control.positionCalculate:main",
+            "command = mobile_control.commandPublisher:main",
         ],
     },
 )
