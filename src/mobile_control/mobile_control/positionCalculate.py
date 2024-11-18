@@ -54,8 +54,8 @@ class ControlNode(Node):
             self.state = 'rotate_to_target'                     # 상태 변경
             self.get_logger().info(f'Target received: Position: {self.target_position}, Theta: {self.target_theta}')
 
-    def LimitSpeed(self, speed, maxSpeed=0):
-        return float(max(-maxSpeed, min(speed, maxSpeed)))
+    def LimitSpeed(self, speed, minSpeed = 0,maxSpeed=0):
+        return float(max(minSpeed, min(speed, maxSpeed)))
 
     def timer_callback(self):
         if self.state == 'rotate_to_target':
@@ -76,7 +76,7 @@ class ControlNode(Node):
                                          (self.current_position[1] - self.start_position[1]) ** 2)
             _error = self.target_distance - current_distance
             
-            if abs(_error) <= 0.01:  # 목표 거리 도달 시
+            if _error <= 0.01:  # 목표 거리 도달 시
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveForward Finish {self.target_distance:.2f}[m]')
                 self.state = 'rotate_to_final_theta'
@@ -104,9 +104,9 @@ class ControlNode(Node):
     def PublishCtrlCmd(self, linear_speed=0, angular_speed=0):
         ctrl_cmd = CtrlCmd()
         ctrl_cmd.ctrl_cmd_gear = 6  # 4T4D 기어 설정
-        ctrl_cmd.ctrl_cmd_x_linear = self.LimitSpeed(linear_speed, maxSpeed=self.maxlinear_speed)
+        ctrl_cmd.ctrl_cmd_x_linear = self.LimitSpeed(linear_speed, minSpeed = 0 ,maxSpeed=self.maxlinear_speed)
         ctrl_cmd.ctrl_cmd_y_linear = 0.0
-        ctrl_cmd.ctrl_cmd_z_angular = self.LimitSpeed(angular_speed, maxSpeed=self.maxangular_speed)
+        ctrl_cmd.ctrl_cmd_z_angular = self.LimitSpeed(angular_speed, minSpeed = -self.maxangular_speed, maxSpeed = self.maxangular_speed)
         self.get_logger().info(f'Linear Speed: {linear_speed:.2f}[m/s], Angular Speed: {ctrl_cmd.ctrl_cmd_z_angular:.2f}[deg/s]')
         self.publisher.publish(ctrl_cmd)
 
