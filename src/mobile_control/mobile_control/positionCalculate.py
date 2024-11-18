@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from yhs_can_interfaces.msg import CtrlCmd
+from std_msgs.msg import Float32MultiArray  # Float32MultiArray 메시지 추가
 import tf_transformations
 import math
 import time
@@ -13,11 +14,12 @@ class ControlNode(Node):
     def __init__(self):
         super().__init__('control_node')
         self.create_subscription(Odometry, '/odom', self.listener_callback, 10)
+        self.create_subscription(Float32MultiArray, '/target', self.target_callback, 10)  # 목표 위치 및 자세 구독
         self.publisher = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
 
-        # 목표 위치 및 자세 설정
-        self.target_position = (0, 0)   # 목표 위치 (X, Y)
-        self.target_theta = 0           # 목표 자세 (Degree)
+        # 초기 목표 위치 및 자세 설정
+        self.target_position = (0.0, 0.0)   # 목표 위치 (X, Y)
+        self.target_theta = 0.0              # 목표 자세 (Degree)
 
         # 최대 속도 및 각속도 설정
         self.maxlinear_speed = 0.1    # 최대 선속도 (m/s)
@@ -29,7 +31,7 @@ class ControlNode(Node):
         self.current_theta = 0.0
 
         # 상태 변수 추가
-        self.state = 'rotate_to_target'  # 초기 상태
+        self.state = 'idle'  # 초기 상태를 idle로 설정
 
         # 이동 거리 및 시작 위치 변수
         self.target_distance = 0.0
@@ -44,6 +46,14 @@ class ControlNode(Node):
         )
         self.current_theta = math.degrees(self.current_theta)
 
+    def target_callback(self, msg):
+        # 목표 위치 및 자세 업데이트
+        if len(msg.data) >= 3:
+            self.target_position = (msg.data[0], msg.data[1])  # 목표 위치 (X, Y)
+            self.target_theta = msg.data[2]                     # 목표 자세 (Degree)
+            self.state = 'rotate_to_target'                     # 상태 변경
+            self.get_logger().info(f'Target received: Position: {self.target_position}, Theta: {self.target_theta}')
+
     def LimitSpeed(self, speed, maxSpeed=0):
         return float(max(-maxSpeed, min(speed, maxSpeed)))
 
@@ -57,7 +67,7 @@ class ControlNode(Node):
                 self.start_position = self.current_position  # 시작 위치 저장
                 self.target_distance = math.sqrt((self.target_position[0] - self.start_position[0]) ** 2 +
                                                   (self.target_position[1] - self.start_position[1]) ** 2)
-                
+
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 time.sleep(1)
 
