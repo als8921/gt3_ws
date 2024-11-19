@@ -3,99 +3,139 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from yhs_can_interfaces.msg import CtrlCmd
 from std_msgs.msg import Float32MultiArray  # Float32MultiArray 메시지 추가
+from rclpy.qos import qos_profile_sensor_data
 import tf_transformations
 import math
 import time
+LinearKp = 0.7
+AngularKp = 4.0
 
-def normalize_angle(angle):
+MinLinearSpeed = 0.0      #[m/s]    후진기능을 넣을 시 음수로 전환
+MaxLinearSpeed = 0.3    #[m/s]
+MaxAngularSpeed = 30      #[deg/s]
+
+def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180
+
+def AngularSpeedLimit(speed, maxSpeed = MaxAngularSpeed):
+    return float(max(-maxSpeed, min(speed, maxSpeed)))
+
+def LinearSpeedLimit(speed, minSpeed = MinLinearSpeed, maxSpeed = MaxLinearSpeed):
+    return float(max(minSpeed, min(speed, maxSpeed)))
+
+class Position:
+    def __init__(self):
+        self.x = 0.0        # [m]
+        self.y = 0.0        # [m]
+        self.theta = 0.0    # [deg]
+
+    def Angle(self, cmd):
+        NormalizeAngle(math.degrees(math.atan2(cmd.y - self.y, cmd.x - self.x)))
+    
 
 class ControlNode(Node):
     def __init__(self):
         super().__init__('control_node')
-        self.create_subscription(Odometry, '/odom', self.listener_callback, 10)
+        self.create_subscription(Odometry, '/odom', self.listener_callback, qos_profile=qos_profile_sensor_data)
         self.create_subscription(Float32MultiArray, '/target', self.target_callback, 10)  # 목표 위치 및 자세 구독
-        self.publisher = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
+        self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
 
-        # 초기 목표 위치 및 자세 설정
-        self.target_position = (0.0, 0.0)   # 목표 위치 (X, Y)
-        self.target_theta = 0.0              # 목표 자세 (Degree)
+        self.Pos = Position()       # Robot의 Odom 위치
+        self.CmdPos = Position()    # 목표 위치
+        self.StartPos = Position()  # 전진 명령을 시작할 때의 위치
 
         # 최대 속도 및 각속도 설정
-        self.maxlinear_speed = 0.1    # 최대 선속도 (m/s)
-        self.maxangular_speed = 30     # 최대 각속도 (deg/s)
+        self.maxlinear_speed = 0.3      # 최대 선속도 (m/s)
+        self.maxangular_speed = 30      # 최대 각속도 (deg/s)
 
-        self.timer = self.create_timer(1.0 / 30.0, self.timer_callback)  # 30Hz
+        # 현재 선속도 변수 초기화
+        self.current_linear_speed = 0.0
 
-        self.current_position = (0.0, 0.0)
-        self.current_theta = 0.0
 
         # 상태 변수 추가
         self.state = 'idle'  # 초기 상태를 idle로 설정
 
         # 이동 거리 및 시작 위치 변수
         self.target_distance = 0.0
-        self.start_position = (0.0, 0.0)
+        self.timer = self.create_timer(1.0 / 30.0, self.timer_callback)  # 30Hz
+
 
     def listener_callback(self, msg):
         # 현재 위치와 자세 업데이트
-        self.current_position = (msg.pose.pose.position.x, msg.pose.pose.position.y)
+        self.Pos.x = msg.pose.pose.position.x
+        self.Pos.y = msg.pose.pose.position.y
+
         orientation_q = msg.pose.pose.orientation
-        _, _, self.current_theta = tf_transformations.euler_from_quaternion(
+        _, _, yaw = tf_transformations.euler_from_quaternion(
             [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
         )
-        self.current_theta = math.degrees(self.current_theta)
+        self.Pos.theta = math.degrees(yaw)
 
     def target_callback(self, msg):
         # 목표 위치 및 자세 업데이트
         if len(msg.data) >= 3:
-            self.target_position = (msg.data[0], msg.data[1])  # 목표 위치 (X, Y)
-            self.target_theta = msg.data[2]                     # 목표 자세 (Degree)
+            self.CmdPos.x = msg.data[0]
+            self.CmdPos.y = msg.data[1]
+            self.CmdPos.theta = msg.data[2]
             self.state = 'rotate_to_target'                     # 상태 변경
-            self.get_logger().info(f'Target received: Position: {self.target_position}, Theta: {self.target_theta}')
+            self.get_logger().info(f'Target received: Position: {[self.CmdPos.x, self.CmdPos.y]}, Theta: {self.CmdPos.theta}')
 
     def LimitSpeed(self, speed, minSpeed = 0,maxSpeed=0):
         return float(max(minSpeed, min(speed, maxSpeed)))
 
     def timer_callback(self):
         if self.state == 'rotate_to_target':
-            self.Rotate(normalize_angle(math.degrees(math.atan2(self.target_position[1] - self.current_position[1],
-                                                                  self.target_position[0] - self.current_position[0]))))
-            if abs(normalize_angle(math.degrees(math.atan2(self.target_position[1] - self.current_position[1],
-                                                               self.target_position[0] - self.current_position[0]))) - self.current_theta) <= 0.1:
+            self.Rotate(NormalizeAngle(math.degrees(math.atan2(self.CmdPos.y - self.Pos.y,
+                                                                  self.CmdPos.x - self.Pos.x))))
+            if abs(NormalizeAngle(math.degrees(math.atan2(self.CmdPos.y - self.Pos.y,
+                                                               self.CmdPos.x - self.Pos.x))) - self.Pos.theta) <= 2:
                 self.state = 'move_forward'
-                self.start_position = self.current_position  # 시작 위치 저장
-                self.target_distance = math.sqrt((self.target_position[0] - self.start_position[0]) ** 2 +
-                                                  (self.target_position[1] - self.start_position[1]) ** 2)
+                self.StartPos.x = self.Pos.x
+                self.StartPos.y = self.Pos.y
+                self.target_distance = math.sqrt((self.CmdPos.x - self.StartPos.x) ** 2 +
+                                                  (self.CmdPos.y - self.StartPos.y) ** 2)
 
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
-                time.sleep(1)
+                time.sleep(0.5)
 
         elif self.state == 'move_forward':
-            current_distance = math.sqrt((self.current_position[0] - self.start_position[0]) ** 2 +
-                                         (self.current_position[1] - self.start_position[1]) ** 2)
+            current_distance = math.sqrt((self.Pos.x - self.StartPos.x) ** 2 +
+                                         (self.Pos.y - self.StartPos.y) ** 2)
             _error = self.target_distance - current_distance
             
             if _error <= 0.01:  # 목표 거리 도달 시
+                self.current_linear_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveForward Finish {self.target_distance:.2f}[m]')
                 self.state = 'rotate_to_final_theta'
-                time.sleep(1)
+                time.sleep(0.5)
             else:
-                _linear_speed = self.PControl(_error, Kp=1)  # 선속도 계산
-                self.PublishCtrlCmd(linear_speed=_linear_speed)  # 속도 명령 발행
+                # 목표 선속도 계산 (최대 선속도로 제한)
+                _target_linear_speed = AngularSpeedLimit(self.PControl(_error, Kp=AngularKp))
+                
+                # 선속도 점진적 증가 로직
+                if self.current_linear_speed < _target_linear_speed:
+                    self.current_linear_speed += 0.01  # 속도를 천천히 증가
+                elif self.current_linear_speed > _target_linear_speed:
+                    self.current_linear_speed -= 0.01  # 속도를 천천히 감소
+                else:
+                    self.current_linear_speed = _target_linear_speed
+
+                # 선속도를 목표 속도로 설정
+                self.PublishCtrlCmd(linear_speed=LinearSpeedLimit(self.current_linear_speed))
+
 
         elif self.state == 'rotate_to_final_theta':
-            self.Rotate(normalize_angle(self.target_theta))
-            if abs(normalize_angle(self.target_theta - self.current_theta)) <= 0.1:
+            self.Rotate(NormalizeAngle(self.CmdPos.theta))
+            if abs(NormalizeAngle(self.CmdPos.theta - self.Pos.theta)) <= 0.1:
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.state = 'finished'
                 self.get_logger().info('목표 위치 도달.')
-                time.sleep(1)
+                time.sleep(0.5)
 
     def Rotate(self, _desired_theta):
-        _error = normalize_angle(_desired_theta - self.current_theta)
-        _angular_speed = self.PControl(_error, Kp=1)
+        _error = NormalizeAngle(_desired_theta - self.Pos.theta)
+        _angular_speed = self.PControl(_error, Kp=LinearKp)
         self.PublishCtrlCmd(angular_speed=_angular_speed)
 
     def PControl(self, error, Kp=1):
@@ -104,11 +144,12 @@ class ControlNode(Node):
     def PublishCtrlCmd(self, linear_speed=0, angular_speed=0):
         ctrl_cmd = CtrlCmd()
         ctrl_cmd.ctrl_cmd_gear = 6  # 4T4D 기어 설정
-        ctrl_cmd.ctrl_cmd_x_linear = self.LimitSpeed(linear_speed, minSpeed = 0 ,maxSpeed=self.maxlinear_speed)
+        ctrl_cmd.ctrl_cmd_x_linear = -LinearSpeedLimit(linear_speed)
         ctrl_cmd.ctrl_cmd_y_linear = 0.0
-        ctrl_cmd.ctrl_cmd_z_angular = self.LimitSpeed(angular_speed, minSpeed = -self.maxangular_speed, maxSpeed = self.maxangular_speed)
+        ctrl_cmd.ctrl_cmd_z_angular = AngularSpeedLimit(angular_speed)
+        self.get_logger().info(f'POS: {[self.Pos.x, self.Pos.y]},  {self.Pos.theta:.2f}[deg]')
         self.get_logger().info(f'Linear Speed: {linear_speed:.2f}[m/s], Angular Speed: {ctrl_cmd.ctrl_cmd_z_angular:.2f}[deg/s]')
-        self.publisher.publish(ctrl_cmd)
+        self.pub_command.publish(ctrl_cmd)
 
 def main(args=None):
     rclpy.init(args=args)
