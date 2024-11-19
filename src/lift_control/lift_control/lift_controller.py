@@ -28,13 +28,14 @@ class RS485Communication:
                 response.extend(self.ser.read(4))
                 additional_read = response[-1] + 1
                 response.extend(self.ser.read(additional_read))
-
+                print(*response)
                 if response[3] == 197:
                     self.lift_position = md400.bytes_to_pos(response)
                 else:
                     self.lift_position = None
                 
                 if self.lift_position is not None:
+                    print(self.lift_position)
                     self.position_publisher.publish(Float32(data=float(self.lift_position)))
 
     def send_data(self, data):
@@ -52,6 +53,7 @@ class RS485Communication:
                 self.read_data()
             else:
                 packet = md400.get_pos()
+                print("send : ", *packet)
                 self.send_data(packet)
                 self.read_data()
                 time.sleep(0.05)
@@ -64,13 +66,18 @@ class LiftServiceServer(Node):
         super().__init__('lift_service_server')
         self.rs485_comm = rs485_comm
         self.srv = self.create_service(LiftCommand, 'lift_command', self.service_callback)
+        print('lift Service init**')
 
     def service_callback(self, request, response):
         print(request.command, request.value)
         response.status = False
         if request.command == "MOVE":
             self.get_logger().info(f'Setting position to: {request.value}')
-            self.rs485_comm.command_queue.append(md400.set_pos(request.value))
+            if(request.value >= 0):
+                self.rs485_comm.command_queue.append(md400.set_direction_ccw())
+            else:
+                self.rs485_comm.command_queue.append(md400.set_direction_cw())
+            self.rs485_comm.command_queue.append(md400.set_pos(abs(request.value)))
             response.status = True
 
         elif request.command == "STOP":
