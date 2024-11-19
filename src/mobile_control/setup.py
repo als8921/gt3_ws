@@ -25,7 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             "twist_transform = mobile_control.CtrlCmdtoTwist:main",
-            "control = mobile_control.positionCalculate:main",
+            "control = mobile_control.MobileController:main",
             "command = mobile_control.commandPublisher:main",
         ],
     },
