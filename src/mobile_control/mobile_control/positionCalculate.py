@@ -7,12 +7,12 @@ from rclpy.qos import qos_profile_sensor_data
 import tf_transformations
 import math
 import time
-LinearKp = 0.7
-AngularKp = 4.0
+LinearKp = 0.73
+AngularKp = 1.5
 
-MinLinearSpeed = 0.0      #[m/s]    후진기능을 넣을 시 음수로 전환
-MaxLinearSpeed = 0.3    #[m/s]
-MaxAngularSpeed = 30      #[deg/s]
+MinLinearSpeed = 0.0    #[m/s]    후진기능을 넣을 시 음수로 전환
+MaxLinearSpeed = 0.5    #[m/s]
+MaxAngularSpeed = 50    #[deg/s]
 
 def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180
@@ -36,7 +36,7 @@ class Position:
 class ControlNode(Node):
     def __init__(self):
         super().__init__('control_node')
-        self.create_subscription(Odometry, '/odom', self.listener_callback, qos_profile=qos_profile_sensor_data)
+        self.create_subscription(Odometry, '/odom3', self.listener_callback, qos_profile=qos_profile_sensor_data)
         self.create_subscription(Float32MultiArray, '/target', self.target_callback, 10)  # 목표 위치 및 자세 구독
         self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
 
@@ -77,8 +77,12 @@ class ControlNode(Node):
             self.CmdPos.x = msg.data[0]
             self.CmdPos.y = msg.data[1]
             self.CmdPos.theta = msg.data[2]
-            self.state = 'rotate_to_target'                     # 상태 변경
+
             self.get_logger().info(f'Target received: Position: {[self.CmdPos.x, self.CmdPos.y]}, Theta: {self.CmdPos.theta}')
+            if(math.sqrt((self.CmdPos.x - self.Pos.x) ** 2  + (self.CmdPos.y - self.Pos.y) ** 2) < 0.1):
+                self.state = 'rotate_to_final_theta'
+            else:
+                self.state = 'rotate_to_target'                     # 상태 변경
 
     def LimitSpeed(self, speed, minSpeed = 0,maxSpeed=0):
         return float(max(minSpeed, min(speed, maxSpeed)))
@@ -111,7 +115,7 @@ class ControlNode(Node):
                 time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
-                _target_linear_speed = AngularSpeedLimit(self.PControl(_error, Kp=AngularKp))
+                _target_linear_speed = AngularSpeedLimit(self.PControl(_error, Kp=LinearKp))
                 
                 # 선속도 점진적 증가 로직
                 if self.current_linear_speed < _target_linear_speed:
@@ -131,11 +135,15 @@ class ControlNode(Node):
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.state = 'finished'
                 self.get_logger().info('목표 위치 도달.')
+                self.get_logger().info(f'목표 위치 : {self.CmdPos.x, self.CmdPos.y, self.CmdPos.theta}')
+                self.get_logger().info(f'현재 위치 : {self.Pos.x, self.Pos.y, self.Pos.theta}')
+                self.get_logger().info(f'error_Distance : {math.sqrt((self.CmdPos.x - self.Pos.x) ** 2  + (self.CmdPos.y - self.Pos.y) ** 2)}[m]')
+                self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 time.sleep(0.5)
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
-        _angular_speed = self.PControl(_error, Kp=LinearKp)
+        _angular_speed = self.PControl(_error, Kp=AngularKp)
         self.PublishCtrlCmd(angular_speed=_angular_speed)
 
     def PControl(self, error, Kp=1):
