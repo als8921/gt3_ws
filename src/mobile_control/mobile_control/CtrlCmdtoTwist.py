@@ -18,7 +18,7 @@ class CtrlCmdToTwistNode(Node):
         twist = Twist()
         
         # CtrlCmd에서 값을 가져와서 Twist에 설정
-        twist.linear.x = ctrl_cmd.ctrl_cmd_x_linear
+        twist.linear.x = -ctrl_cmd.ctrl_cmd_x_linear
         twist.linear.y = ctrl_cmd.ctrl_cmd_y_linear  # Y축 속도는 0으로 설정
         twist.angular.z = ctrl_cmd.ctrl_cmd_z_angular * 3.141592 / 180.0  # 각속도 설정
         
