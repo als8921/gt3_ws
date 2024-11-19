@@ -22,7 +22,7 @@ setup(
     entry_points={
         'console_scripts': [
             "client = lift_control.client:main",
-            "control = lift_control.lift_control:main",
+            "control = lift_control.lift_controller:main",
         ],
     },
 )
