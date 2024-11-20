@@ -20,6 +20,18 @@ MaxAngularSpeed = 50        # [deg/s]
 ThetaErrorBoundary = 0.1    # 각도 명령 허용 오차
 ####################
 
+class State(Enum):
+    Stop = "Stop"
+    InitialRotate = 0
+    MoveForward = 1
+    FinalRotate = 2
+    
+class Position:
+    def __init__(self):
+        self.x = 0.0        # [m]
+        self.y = 0.0        # [m]
+        self.theta = 0.0    # [deg]
+
 def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180
 
@@ -29,24 +41,11 @@ def AngularSpeedLimit(speed, maxSpeed = MaxAngularSpeed):
 def LinearSpeedLimit(speed, minSpeed = MinLinearSpeed, maxSpeed = MaxLinearSpeed):
     return float(max(minSpeed, min(speed, maxSpeed)))
 
-class State(Enum):
-    Stop = "Stop"
-    InitialRotate = 0
-    MoveForward = 1
-    FinalRotate = 2
+def RelativeDistance(a : Position, b : Position):
+    return math.dist([b.x - a.x],[b.y - a.y])
 
-class Position:
-    def __init__(self):
-        self.x = 0.0        # [m]
-        self.y = 0.0        # [m]
-        self.theta = 0.0    # [deg]
-
-    @staticmethod
-    def RelativeDistance(a, b):
-        return math.dist([b.x - a.x],[b.y - a.y])
-    
-    def RelativeAngle(self, other):
-        return NormalizeAngle(math.degrees(math.atan2(other.y - self.y, other.x - self.x)))
+def RelativeAngle(a : Position, b : Position):
+    return NormalizeAngle(math.degrees(math.atan2(b.y - a.y, b.x - a.x)))
     
 class ControlNode(Node):
     def __init__(self):
@@ -91,18 +90,18 @@ class ControlNode(Node):
 
     def timer_callback(self):
         if self.state == State.InitialRotate:
-            self.Rotate(self.Pos.RelativeAngle(self.CmdPos))
-            if abs(self.Pos.RelativeAngle(self.CmdPos) - self.Pos.theta) <= ThetaErrorBoundary:
+            self.Rotate(RelativeAngle(self.Pos, self.CmdPos))
+            if abs(RelativeAngle(self.Pos, self.CmdPos) - self.Pos.theta) <= ThetaErrorBoundary:
                 self.state = State.MoveForward
                 self.StartPos.x = self.Pos.x
                 self.StartPos.y = self.Pos.y
-                self.target_distance = Position.RelativeDistance(self.CmdPos, self.StartPos)
+                self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
 
                 self.PublishCtrlCmd(0, 0)  # 최종적으로 속도 0으로 설정
                 time.sleep(0.5)
 
         elif self.state == State.MoveForward:
-            current_distance = Position.RelativeDistance(self.Pos, self.StartPos)
+            current_distance = RelativeDistance(self.Pos, self.StartPos)
             _error = self.target_distance - current_distance
             
             if _error <= 0.01:  # 목표 거리 도달 시
@@ -135,7 +134,7 @@ class ControlNode(Node):
                 self.get_logger().info('목표 위치 도달.')
                 self.get_logger().info(f'목표 위치 : {self.CmdPos.x, self.CmdPos.y, self.CmdPos.theta}')
                 self.get_logger().info(f'현재 위치 : {self.Pos.x, self.Pos.y, self.Pos.theta}')
-                self.get_logger().info(f'error_Distance : {Position.RelativeDistance(self.CmdPos, self.Pos)}[m]')
+                self.get_logger().info(f'error_Distance : {RelativeDistance(self.CmdPos, self.Pos)}[m]')
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 time.sleep(0.5)
 
