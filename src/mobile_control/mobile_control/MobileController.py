@@ -10,6 +10,7 @@ import time
 from enum import Enum
 
 ### Parameters ###
+Hz = 30
 LinearKp = 0.73
 AngularKp = 1.5
 
@@ -54,7 +55,7 @@ class ControlNode(Node):
         self.create_subscription(Float32MultiArray, '/target', self.command_cb, 10)  # 목표 위치 및 자세 구독
         self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
 
-        self.timer = self.create_timer(1.0 / 30.0, self.timer_callback)  # 30Hz
+        self.timer = self.create_timer(1 / Hz, self.timer_callback)
 
         ### Position 객체 ###
         self.Pos = Position()       # Robot의 Odom 위치
