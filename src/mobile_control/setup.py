@@ -27,6 +27,9 @@ setup(
             "twist_transform = mobile_control.CtrlCmdtoTwist:main",
             "control = mobile_control.MobileController:main",
             "command = mobile_control.commandPublisher:main",
+            
+            "string_command = mobile_control.StringPublisher:main",
+            "calculate_angle = mobile_control.CreateCommand:main"
         ],
     },
 )
