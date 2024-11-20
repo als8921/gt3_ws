@@ -153,8 +153,8 @@ class ControlNode(Node):
         ctrl_cmd.ctrl_cmd_x_linear = -LinearSpeedLimit(linear_speed)
         ctrl_cmd.ctrl_cmd_y_linear = 0.0
         ctrl_cmd.ctrl_cmd_z_angular = AngularSpeedLimit(angular_speed)
-        self.get_logger().info(f'{(self.Pos.x, self.Pos.y)}[m], {self.Pos.theta:.2f}[deg]')
-        self.get_logger().info(f'{linear_speed:.2f}[m/s], {ctrl_cmd.ctrl_cmd_z_angular:.2f}[deg/s]')
+        # self.get_logger().info(f'{(self.Pos.x, self.Pos.y)}[m], {self.Pos.theta:.2f}[deg]')
+        # self.get_logger().info(f'{linear_speed:.2f}[m/s], {ctrl_cmd.ctrl_cmd_z_angular:.2f}[deg/s]')
         self.pub_command.publish(ctrl_cmd)
 
 def main(args=None):
