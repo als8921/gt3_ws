@@ -176,7 +176,11 @@ class ControlNode(Node):
                 # time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
-                _target_linear_speed = LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
+                angle_to_target = RelativeAngle(self.Pos, self.CmdPos)
+                _angle_error = NormalizeAngle(angle_to_target - self.Pos.theta)
+
+                _direction = 1 if _angle_error >= 0 else -1  # 1 일때 +y 방향, -1 일때 -y 방향
+                _target_linear_speed = _direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
                 
                 # 선속도 점진적 증가 로직
                 if self.current_linear_speed < _target_linear_speed:
@@ -217,7 +221,7 @@ class ControlNode(Node):
 
         if(gear == Gear.Differential):
             ctrl_cmd.ctrl_cmd_x_linear = -LinearXSpeedLimit(linear_speed)
-            ctrl_cmd.ctrl_cmd_z_angular = AngularSpeedLimit(angular_speed)
+            ctrl_cmd.ctrl_cmd_z_angular = -AngularSpeedLimit(angular_speed)
         elif(gear == Gear.Lateral):
             ctrl_cmd.ctrl_cmd_y_linear = LinearYSpeedLimit(linear_speed)
         # self.get_logger().info(f'{(self.Pos.x, self.Pos.y)}[m], {self.Pos.theta:.2f}[deg]')
