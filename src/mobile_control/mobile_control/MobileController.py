@@ -123,7 +123,7 @@ class ControlNode(Node):
 
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
 
-                    time.sleep(0.5)
+                    # time.sleep(0.5)
                     
             elif(self.CmdPos.gearSetting == Gear.Lateral):
                 self.Rotate(NormalizeAngle(self.CmdPos.theta))
@@ -135,7 +135,7 @@ class ControlNode(Node):
                     self.current_linear_speed = 0
                     self.get_logger().info(f'InitialRotate Finish, MoveLateral{self.target_distance}[m]')
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
-                    time.sleep(0.5)
+                    # time.sleep(0.5)
 
 
 
@@ -148,7 +148,7 @@ class ControlNode(Node):
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveForward Finish {self.target_distance:.2f}[m]')
                 self.state = State.FinalRotate
-                time.sleep(0.5)
+                # time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
                 _target_linear_speed = LinearXSpeedLimit(self.PControl(_error, Kp = LinearKp))
@@ -173,7 +173,7 @@ class ControlNode(Node):
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveLateral Finish {self.target_distance:.2f}[m]')
                 self.state = State.FinalRotate
-                time.sleep(0.5)
+                # time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
                 _target_linear_speed = LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
@@ -201,7 +201,7 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Distance : {RelativeDistance(self.CmdPos, self.Pos)}[m]')
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
-                time.sleep(0.5)
+                # time.sleep(0.5)
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
