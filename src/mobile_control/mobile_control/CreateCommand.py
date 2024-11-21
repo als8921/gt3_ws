@@ -36,7 +36,7 @@ class AnglePublisher(Node):
                 # 큐에서 하나 꺼내서 퍼블리시
                 gear, x, y, angle = self.queue.popleft()
                 msg = Float32MultiArray()
-                msg.data = [gear, x, y, angle]
+                msg.data = [float(gear), x, y, angle]
                 self.publisher_.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
 
