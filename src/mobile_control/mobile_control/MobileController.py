@@ -26,8 +26,8 @@ class State(Enum):
     Stop = "Stop"
     InitialRotate = 0
     MoveForward = 1
-    MoveLateral = 1
-    FinalRotate = 2
+    MoveLateral = 2
+    FinalRotate = 3
 
 class Gear:
     Disable = 0
@@ -172,7 +172,7 @@ class ControlNode(Node):
                 self.current_linear_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveLateral Finish {self.target_distance:.2f}[m]')
-                self.state = State.Stop
+                self.state = State.FinalRotate
                 time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
