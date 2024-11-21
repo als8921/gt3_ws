@@ -16,9 +16,9 @@ AngularKp = 1.5
 
 MinLinearSpeed = 0.0        # [m/s]    후진기능을 넣을 시 음수로 전환
 MaxLinearSpeed = 0.5        # [m/s]
-MaxAngularSpeed = 50        # [deg/s]
+MaxAngularSpeed = 30        # [deg/s]
 
-ThetaErrorBoundary = 0.1    # 각도 명령 허용 오차
+ThetaErrorBoundary = 1      # 각도 명령 허용 오차
 ####################
 
 class State(Enum):
@@ -43,7 +43,7 @@ def LinearSpeedLimit(speed, minSpeed = MinLinearSpeed, maxSpeed = MaxLinearSpeed
     return float(max(minSpeed, min(speed, maxSpeed)))
 
 def RelativeDistance(a : Position, b : Position):
-    return math.dist([b.x - a.x],[b.y - a.y])
+    return math.sqrt((b.x - a.x)**2 + (b.y - a.y)**2)
 
 def RelativeAngle(a : Position, b : Position):
     return NormalizeAngle(math.degrees(math.atan2(b.y - a.y, b.x - a.x)))
@@ -51,11 +51,11 @@ def RelativeAngle(a : Position, b : Position):
 class ControlNode(Node):
     def __init__(self):
         super().__init__('mobile_control')
-        self.create_subscription(Odometry, '/odom', self.odom_cb, qos_profile=qos_profile_sensor_data)
+        self.create_subscription(Odometry, '/odom3', self.odom_cb, qos_profile=qos_profile_sensor_data)
         self.create_subscription(Float32MultiArray, '/target', self.command_cb, 10)  # 목표 위치 및 자세 구독
         self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
 
-        self.timer = self.create_timer(1 / Hz, self.timer_callback)
+        self.timer = self.create_timer(1.0 / Hz, self.timer_callback)
 
         ### Position 객체 ###
         self.Pos = Position()       # Robot의 Odom 위치
@@ -90,15 +90,19 @@ class ControlNode(Node):
                 self.state = State.InitialRotate
 
     def timer_callback(self):
-        if self.state == State.InitialRotate:
+        if self.state == State.Stop:
+            self.PublishCtrlCmd(0, 0)  # 최종적으로 속도 0으로 설정
+        elif self.state == State.InitialRotate:
             self.Rotate(RelativeAngle(self.Pos, self.CmdPos))
             if abs(RelativeAngle(self.Pos, self.CmdPos) - self.Pos.theta) <= ThetaErrorBoundary:
                 self.state = State.MoveForward
                 self.StartPos.x = self.Pos.x
                 self.StartPos.y = self.Pos.y
                 self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
+                self.get_logger().info(f'InitialRotate Finish, MoveForward{self.target_distance}[m]')
 
                 self.PublishCtrlCmd(0, 0)  # 최종적으로 속도 0으로 설정
+
                 time.sleep(0.5)
 
         elif self.state == State.MoveForward:
@@ -113,7 +117,7 @@ class ControlNode(Node):
                 time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
-                _target_linear_speed = AngularSpeedLimit(self.PControl(_error, Kp = LinearKp))
+                _target_linear_speed = LinearSpeedLimit(self.PControl(_error, Kp = LinearKp))
                 
                 # 선속도 점진적 증가 로직
                 if self.current_linear_speed < _target_linear_speed:
@@ -137,6 +141,7 @@ class ControlNode(Node):
                 self.get_logger().info(f'현재 위치 : {self.Pos.x, self.Pos.y, self.Pos.theta}')
                 self.get_logger().info(f'error_Distance : {RelativeDistance(self.CmdPos, self.Pos)}[m]')
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
+                self.get_logger().info(f'FinalRotate Finish')
                 time.sleep(0.5)
 
     def Rotate(self, _desired_theta):
