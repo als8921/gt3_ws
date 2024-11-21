@@ -36,7 +36,7 @@ class AnglePublisher(Node):
                 # 큐에서 하나 꺼내서 퍼블리시
                 gear, x, y, angle = self.queue.popleft()
                 msg = Float32MultiArray()
-                msg.data = [gear, x, y, angle]
+                msg.data = [float(gear), x, y, angle]
                 self.publisher_.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
 
@@ -61,10 +61,12 @@ def calculate_perpendicular_intersection(x1, y1, x2, y2):
         interPosition.x = n / ((-1 / m) - m)  # 교차점 x
         interPosition.y = (-1 / m) * interPosition.x  # 교차점 y
 
-    return RelativeAngle(Position(), interPosition)
+    if(interPosition.x == 0 and interPosition.y == 0):
+        return NormalizeAngle(RelativeAngle(Position(x1, y1), Position(x2, y2)) + 90)
+    return RelativeAngle(Position(0, 0), interPosition)
 
 class Position:
-    def __init__(self, x=0.0, y=0.0):
+    def __init__(self, x = 0.0, y = 0.0):
         self.x = x  # [m]
         self.y = y  # [m]
 

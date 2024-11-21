@@ -26,8 +26,8 @@ class State(Enum):
     Stop = "Stop"
     InitialRotate = 0
     MoveForward = 1
-    MoveLateral = 1
-    FinalRotate = 2
+    MoveLateral = 2
+    FinalRotate = 3
 
 class Gear:
     Disable = 0
@@ -123,7 +123,7 @@ class ControlNode(Node):
 
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
 
-                    time.sleep(0.5)
+                    # time.sleep(0.5)
                     
             elif(self.CmdPos.gearSetting == Gear.Lateral):
                 self.Rotate(NormalizeAngle(self.CmdPos.theta))
@@ -135,7 +135,7 @@ class ControlNode(Node):
                     self.current_linear_speed = 0
                     self.get_logger().info(f'InitialRotate Finish, MoveLateral{self.target_distance}[m]')
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
-                    time.sleep(0.5)
+                    # time.sleep(0.5)
 
 
 
@@ -148,7 +148,7 @@ class ControlNode(Node):
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveForward Finish {self.target_distance:.2f}[m]')
                 self.state = State.FinalRotate
-                time.sleep(0.5)
+                # time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
                 _target_linear_speed = LinearXSpeedLimit(self.PControl(_error, Kp = LinearKp))
@@ -172,11 +172,15 @@ class ControlNode(Node):
                 self.current_linear_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveLateral Finish {self.target_distance:.2f}[m]')
-                self.state = State.Stop
-                time.sleep(0.5)
+                self.state = State.FinalRotate
+                # time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
-                _target_linear_speed = LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
+                angle_to_target = RelativeAngle(self.Pos, self.CmdPos)
+                _angle_error = NormalizeAngle(angle_to_target - self.Pos.theta)
+
+                _direction = 1 if _angle_error >= 0 else -1  # 1 일때 +y 방향, -1 일때 -y 방향
+                _target_linear_speed = _direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
                 
                 # 선속도 점진적 증가 로직
                 if self.current_linear_speed < _target_linear_speed:
@@ -201,7 +205,7 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Distance : {RelativeDistance(self.CmdPos, self.Pos)}[m]')
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
-                time.sleep(0.5)
+                # time.sleep(0.5)
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
@@ -219,7 +223,7 @@ class ControlNode(Node):
             ctrl_cmd.ctrl_cmd_x_linear = -LinearXSpeedLimit(linear_speed)
             ctrl_cmd.ctrl_cmd_z_angular = AngularSpeedLimit(angular_speed)
         elif(gear == Gear.Lateral):
-            ctrl_cmd.ctrl_cmd_y_linear = LinearYSpeedLimit(linear_speed)
+            ctrl_cmd.ctrl_cmd_y_linear = -LinearYSpeedLimit(linear_speed)
         # self.get_logger().info(f'{(self.Pos.x, self.Pos.y)}[m], {self.Pos.theta:.2f}[deg]')
         # self.get_logger().info(f'{linear_speed:.2f}[m/s], {ctrl_cmd.ctrl_cmd_z_angular:.2f}[deg/s]')
         self.pub_command.publish(ctrl_cmd)
