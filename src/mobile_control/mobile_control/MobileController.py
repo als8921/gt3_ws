@@ -43,7 +43,7 @@ def LinearSpeedLimit(speed, minSpeed = MinLinearSpeed, maxSpeed = MaxLinearSpeed
     return float(max(minSpeed, min(speed, maxSpeed)))
 
 def RelativeDistance(a : Position, b : Position):
-    return math.dist([b.x - a.x],[b.y - a.y])
+    return math.sqrt((b.x - a.x)**2 + (b.y - a.y)**2)
 
 def RelativeAngle(a : Position, b : Position):
     return NormalizeAngle(math.degrees(math.atan2(b.y - a.y, b.x - a.x)))
@@ -99,7 +99,7 @@ class ControlNode(Node):
                 self.StartPos.x = self.Pos.x
                 self.StartPos.y = self.Pos.y
                 self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
-                self.get_logger().info(f'InitialRotate Finish')
+                self.get_logger().info(f'InitialRotate Finish, MoveForward{self.target_distance}[m]')
 
                 self.PublishCtrlCmd(0, 0)  # 최종적으로 속도 0으로 설정
 
