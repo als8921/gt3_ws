@@ -4,6 +4,13 @@ from std_msgs.msg import Float32MultiArray, Bool, String
 from collections import deque
 import math
 
+class Gear:
+    Disable = 0
+    Parking = 1
+    Neutral = 2
+    Differential = 6
+    Lateral = 8
+
 class AnglePublisher(Node):
     def __init__(self):
         super().__init__('angle_publisher')
@@ -17,8 +24,8 @@ class AnglePublisher(Node):
         try:
             x1, y1, x2, y2 = map(float, msg.data.split(';'))
             angle = calculate_perpendicular_intersection(x1, y1, x2, y2)
-            self.queue.append((x1, y1, angle))
-            self.queue.append((x2, y2, angle))
+            self.queue.append((Gear.Differential, x1, y1, angle))
+            self.queue.append((Gear.Lateral, x2, y2, angle))
             self.get_logger().info(f'Parsed and added to queue: {x1}, {y1}, {angle}; {x2}, {y2}, {angle}')
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1;y1;x2;y2"')
@@ -27,9 +34,9 @@ class AnglePublisher(Node):
         if msg.data:  # True가 들어온 경우
             if self.queue:
                 # 큐에서 하나 꺼내서 퍼블리시
-                x, y, angle = self.queue.popleft()
+                gear, x, y, angle = self.queue.popleft()
                 msg = Float32MultiArray()
-                msg.data = [x, y, angle]
+                msg.data = [gear, x, y, angle]
                 self.publisher_.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
 
