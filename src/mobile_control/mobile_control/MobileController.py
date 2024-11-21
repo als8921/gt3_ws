@@ -117,7 +117,7 @@ class ControlNode(Node):
                 time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
-                _target_linear_speed = AngularSpeedLimit(self.PControl(_error, Kp = LinearKp))
+                _target_linear_speed = LinearSpeedLimit(self.PControl(_error, Kp = LinearKp))
                 
                 # 선속도 점진적 증가 로직
                 if self.current_linear_speed < _target_linear_speed:
