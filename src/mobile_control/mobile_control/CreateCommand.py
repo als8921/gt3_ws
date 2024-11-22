@@ -4,6 +4,7 @@ from std_msgs.msg import Float32MultiArray, Bool, String
 from collections import deque
 import math
 
+WorkDistance = 1.0  # 점 사이의 거리
 class Gear:
     Disable = 0
     Parking = 1
@@ -19,14 +20,44 @@ class AnglePublisher(Node):
         self.string_subscriber = self.create_subscription(String, 'input_string_topic', self.string_callback, 10)
         self.queue = deque()  # 결과를 저장할 큐
 
+    def add_points(self, x1, y1, x2, y2, k):
+        # 두 점 사이의 거리 계산
+        distance = ((x2 - x1)**2 + (y2 - y1)**2) ** 0.5
+        angle = calculate_perpendicular_intersection(x1, y1, x2, y2)
+
+        # 첫 점 추가
+        self.queue.append((Gear.Differential, x1, y1, angle))
+        self.get_logger().info(f'Parsed and added to queue: {x1}, {y1}, {angle}')
+
+        # k 거리로 점들을 추가
+        num_points = distance / k  # k 간격으로 몇 개의 점을 생성할 수 있는지
+
+        for i in range(1, int(num_points) + 1):
+            # k 만큼 이동
+            t = i * k
+            # x, y 방향 벡터 계산
+            direction_x = (x2 - x1) / distance
+            direction_y = (y2 - y1) / distance
+
+            # 새로운 점 계산
+            x = x1 + direction_x * t
+            y = y1 + direction_y * t
+
+            # 큐에 추가
+            self.queue.append((Gear.Lateral, x, y, angle))
+            self.get_logger().info(f'Parsed and added to queue: {x}, {y}, {angle}')
+
+        if(num_points % 1 != 0):
+            # 마지막 점 추가 (x2, y2)
+            self.queue.append((Gear.Lateral, x2, y2, angle))
+            self.get_logger().info(f'Parsed and added to queue: {x2}, {y2}, {angle}')
+
+            
     def string_callback(self, msg: String):
         # 수신한 문자열을 파싱하여 큐에 추가
         try:
             x1, y1, x2, y2 = map(float, msg.data.split(';'))
-            angle = calculate_perpendicular_intersection(x1, y1, x2, y2)
-            self.queue.append((Gear.Differential, x1, y1, angle))
-            self.queue.append((Gear.Lateral, x2, y2, angle))
-            self.get_logger().info(f'Parsed and added to queue: {x1}, {y1}, {angle}; {x2}, {y2}, {angle}')
+            self.add_points(x1, y1, x2, y2, WorkDistance)
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1;y1;x2;y2"')
 
