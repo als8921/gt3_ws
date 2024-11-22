@@ -68,8 +68,8 @@ def RelativeAngle(a : Position, b : Position):
 class ControlNode(Node):
     def __init__(self):
         super().__init__('mobile_control')
-        self.create_subscription(Odometry, '/odom3', self.odom_cb, qos_profile=qos_profile_sensor_data)
-        self.create_subscription(Float32MultiArray, '/target', self.command_cb, 10)  # 목표 위치 및 자세 구독
+        self.create_subscription(Odometry, '/odom3', self.odom_callback, qos_profile=qos_profile_sensor_data)
+        self.create_subscription(Float32MultiArray, '/target', self.command_callback, 10)  # 목표 위치 및 자세 구독
         self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
 
         self.timer = self.create_timer(1.0 / Hz, self.timer_callback)
@@ -84,16 +84,14 @@ class ControlNode(Node):
         self.state = State.Stop
 
 
-    def odom_cb(self, msg):
+    def odom_callback(self, msg):
         # 현재 위치와 자세 업데이트
         self.Pos.x = msg.pose.pose.position.x
         self.Pos.y = msg.pose.pose.position.y
-
-        orientation_q = msg.pose.pose.orientation
-        _, _, yaw = tf_transformations.euler_from_quaternion([orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w])
+        _, _, yaw = tf_transformations.euler_from_quaternion(msg.pose.pose.orientation)
         self.Pos.theta = math.degrees(yaw)
 
-    def command_cb(self, msg):
+    def command_callback(self, msg):
         # 목표 위치 및 자세 업데이트
         if len(msg.data) >= 4:
             self.CmdPos.gearSetting = msg.data[0]
