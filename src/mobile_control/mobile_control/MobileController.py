@@ -82,6 +82,7 @@ class ControlNode(Node):
         self.current_linear_speed = 0.0
         self.target_distance = 0.0
         self.state = State.Stop
+        self.init_odom_state = False
 
 
     def odom_callback(self, msg):
@@ -90,6 +91,8 @@ class ControlNode(Node):
         self.Pos.y = msg.pose.pose.position.y
         _, _, yaw = tf_transformations.euler_from_quaternion(msg.pose.pose.orientation)
         self.Pos.theta = math.degrees(yaw)
+
+        self.init_odom_state = True
 
     def command_callback(self, msg):
         # 목표 위치 및 자세 업데이트
@@ -106,6 +109,10 @@ class ControlNode(Node):
                 self.state = State.InitialRotate
 
     def timer_callback(self):
+        if(self.init_odom_state == True):
+            self.control()
+
+    def control(self):
         if self.state == State.Stop:
             self.PublishCtrlCmd(0, 0)  # 최종적으로 속도 0으로 설정
         elif self.state == State.InitialRotate:
