@@ -89,7 +89,9 @@ class ControlNode(Node):
         # 현재 위치와 자세 업데이트
         self.Pos.x = msg.pose.pose.position.x
         self.Pos.y = msg.pose.pose.position.y
-        _, _, yaw = tf_transformations.euler_from_quaternion(msg.pose.pose.orientation)
+
+        orientation_q = msg.pose.pose.orientation
+        _, _, yaw = tf_transformations.euler_from_quaternion([orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w])
         self.Pos.theta = math.degrees(yaw)
 
         self.init_odom_state = True
