@@ -136,8 +136,8 @@ class ControlNode(Node):
                     # time.sleep(0.5)
                     
             elif(self.CmdPos.gearSetting == Gear.Lateral):
-                self.Rotate(NormalizeAngle(RelativeAngle(self.Pos, self.CmdPos) + 90))
-                if abs(NormalizeAngle(RelativeAngle(self.Pos, self.CmdPos) + 90) - self.Pos.theta) <= ThetaErrorBoundary:
+                self.Rotate(NormalizeAngle(self.CmdPos.theta))
+                if abs(NormalizeAngle(self.CmdPos.theta - self.Pos.theta)) <= ThetaErrorBoundary:
                     self.state = State.MoveLateral
                     self.StartPos.x = self.Pos.x
                     self.StartPos.y = self.Pos.y
