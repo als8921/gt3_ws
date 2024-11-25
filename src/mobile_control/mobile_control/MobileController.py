@@ -19,7 +19,7 @@ MaxXLinearSpeed = 0.5       # [m/s]
 MaxYLinearSpeed = 0.3       # [m/s]
 MaxAngularSpeed = 30        # [deg/s]
 
-ThetaErrorBoundary = 1      # 각도 명령 허용 오차
+ThetaErrorBoundary = 0.5     # 각도 명령 허용 오차
 ####################
 
 class State(Enum):
@@ -127,6 +127,9 @@ class ControlNode(Node):
                     self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
                     self.current_linear_speed = 0
                     self.get_logger().info(f'InitialRotate Finish, MoveForward{self.target_distance}[m]')
+                    self.get_logger().info(f'목표 각도 : {RelativeAngle(self.Pos, self.CmdPos)}')
+                    self.get_logger().info(f'현재 각도 : {self.Pos.theta}')
+                    self.get_logger().info(f'error_Theta : {RelativeAngle(self.Pos, self.CmdPos) - self.Pos.theta}[deg]')
 
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
 
