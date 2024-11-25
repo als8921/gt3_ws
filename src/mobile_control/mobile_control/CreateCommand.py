@@ -3,8 +3,12 @@ from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray, Bool, String
 from collections import deque
 import math
+import numpy as np
 
-WorkDistance = 1.0  # 점 사이의 거리
+D_horizontal = 0.5
+D_vertical = 1.0
+D_task = 1.0
+
 class Gear:
     Disable = 0
     Parking = 1
@@ -12,52 +16,49 @@ class Gear:
     Differential = 6
     Lateral = 8
 
-class AnglePublisher(Node):
+class CommandPositionPublisher(Node):
     def __init__(self):
-        super().__init__('angle_publisher')
+        super().__init__('command_position_node')
         self.publisher_ = self.create_publisher(Float32MultiArray, '/target', 10)
         self.bool_subscriber = self.create_subscription(Bool, 'trigger_topic', self.bool_callback, 10)
         self.string_subscriber = self.create_subscription(String, 'input_string_topic', self.string_callback, 10)
         self.queue = deque()  # 결과를 저장할 큐
 
-    def add_points(self, x1, y1, x2, y2, k):
-        # 두 점 사이의 거리 계산
-        distance = ((x2 - x1)**2 + (y2 - y1)**2) ** 0.5
-        angle = calculate_perpendicular_intersection(x1, y1, x2, y2)
 
-        # 첫 점 추가
-        self.queue.append((Gear.Differential, x1, y1, angle))
-        self.get_logger().info(f'Parsed and added to queue: {x1}, {y1}, {angle}')
+    def CreateCommandPositionQueue(self, x1, y1, x2, y2, _D_horizontal, _D_vertical, _D_task):
+        # (x2 - x1, y2 - y1) 벡터 정의 및 정규화
+        move_vector = np.array([x2 - x1, y2 - y1], dtype=float)
+        move_vector_mag = np.linalg.norm(move_vector)
+        move_vector_norm = move_vector / move_vector_mag
+        
+        # 외적 방향 벡터 계산
+        z_unit_vector = np.array([0, 0, 1], dtype=float)
+        direction_vector = np.cross(move_vector, z_unit_vector)[:2]
+        direction_vector = direction_vector / np.linalg.norm(direction_vector)
+        
+        # 새로운 위치 계산
+        new_pos = np.array([x1, y1], dtype=float) + move_vector_norm * _D_horizontal + direction_vector * _D_vertical
+        theta_degrees = np.degrees(np.arctan2(-direction_vector[1], -direction_vector[0]))
 
-        # k 거리로 점들을 추가
-        num_points = distance / k  # k 간격으로 몇 개의 점을 생성할 수 있는지
+        position_queue = deque()
+        position_queue.append((Gear.Differential, new_pos[0], new_pos[1], theta_degrees))
 
-        for i in range(1, int(num_points) + 1):
-            # k 만큼 이동
-            t = i * k
-            # x, y 방향 벡터 계산
-            direction_x = (x2 - x1) / distance
-            direction_y = (y2 - y1) / distance
+        for i in range(1, int((move_vector_mag - 2 * _D_horizontal) // _D_task) + 1):
+            current_position = new_pos + move_vector_norm * (_D_task * i)
+            position_queue.append((Gear.Lateral, current_position[0], current_position[1], theta_degrees))
 
-            # 새로운 점 계산
-            x = x1 + direction_x * t
-            y = y1 + direction_y * t
-
-            # 큐에 추가
-            self.queue.append((Gear.Lateral, x, y, angle))
-            self.get_logger().info(f'Parsed and added to queue: {x}, {y}, {angle}')
-
-        if(num_points % 1 != 0):
-            # 마지막 점 추가 (x2, y2)
-            self.queue.append((Gear.Lateral, x2, y2, angle))
-            self.get_logger().info(f'Parsed and added to queue: {x2}, {y2}, {angle}')
-
+        # 마지막 위치 추가 (모듈로 연산으로 인한 위치)
+        if (move_vector_mag - 2 * _D_horizontal) % _D_task != 0:
+            last_position = new_pos + move_vector_norm * (move_vector_mag - 2 * _D_horizontal)
+            position_queue.append((Gear.Lateral, last_position[0], last_position[1], theta_degrees))
+        
+        return position_queue
             
     def string_callback(self, msg: String):
         # 수신한 문자열을 파싱하여 큐에 추가
         try:
             x1, y1, x2, y2 = map(float, msg.data.split(';'))
-            self.add_points(x1, y1, x2, y2, WorkDistance)
+            self.queue = self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task)
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1;y1;x2;y2"')
 
@@ -73,39 +74,10 @@ class AnglePublisher(Node):
         else:
             self.queue = deque()
 
-def NormalizeAngle(angle):
-    return (angle + 180) % 360 - 180
-
-def RelativeAngle(a, b):
-    return NormalizeAngle(math.degrees(math.atan2(b.y - a.y, b.x - a.x)))
-
-def calculate_perpendicular_intersection(x1, y1, x2, y2):
-    interPosition = Position()
-
-    if x2 - x1 == 0:  # 수직선
-        interPosition.x = x1
-        interPosition.y = 0
-    elif y1 - y2 == 0:  # 수평선
-        interPosition.x = 0
-        interPosition.y = y1
-    else:
-        m = (y2 - y1) / (x2 - x1)  # 기울기
-        n = y1 - m * x1  # y절편
-        interPosition.x = n / ((-1 / m) - m)  # 교차점 x
-        interPosition.y = (-1 / m) * interPosition.x  # 교차점 y
-
-    if(interPosition.x == 0 and interPosition.y == 0):
-        return NormalizeAngle(RelativeAngle(Position(x1, y1), Position(x2, y2)) + 90)
-    return RelativeAngle(Position(0, 0), interPosition)
-
-class Position:
-    def __init__(self, x = 0.0, y = 0.0):
-        self.x = x  # [m]
-        self.y = y  # [m]
 
 def main(args=None):
     rclpy.init(args=args)
-    angle_publisher = AnglePublisher()
+    angle_publisher = CommandPositionPublisher()
     rclpy.spin(angle_publisher)
     angle_publisher.destroy_node()
     rclpy.shutdown()
