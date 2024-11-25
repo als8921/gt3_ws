@@ -70,6 +70,8 @@ class AnglePublisher(Node):
                 msg.data = [float(gear), x, y, angle]
                 self.publisher_.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
+        else:
+            self.queue = deque()
 
 def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180

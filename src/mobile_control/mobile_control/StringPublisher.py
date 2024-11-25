@@ -26,6 +26,16 @@ class PublisherNode(Node):
         self.bool_button = tk.Button(self.root, text="Send True", command=self.send_true, width=20, height=2)
         self.bool_button.pack(pady=10)
 
+
+        self.reset_button = tk.Button(self.root, text="Reset", command=self.reset, width=20, height=2)
+        self.reset_button.pack(pady=10)
+
+    def reset(self):
+        msg = Bool()
+        msg.data = False
+        self.bool_publisher.publish(msg)
+        self.get_logger().info('Published: False')
+
     def send_true(self):
         msg = Bool()
         msg.data = True
