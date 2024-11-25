@@ -2,12 +2,11 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray, Bool, String
 from collections import deque
-import math
 import numpy as np
 
-D_horizontal = 0.5
-D_vertical = 1.0
-D_task = 1.0
+D_horizontal = 0.5  # [m] 작업 위치 수평 거리
+D_vertical = 1.0    # [m] 작업 위치 수직 거리   
+D_task = 1.0        # [m] 작업 사이의 거리
 
 class Gear:
     Disable = 0
