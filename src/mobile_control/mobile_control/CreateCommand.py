@@ -20,7 +20,7 @@ class CommandPositionPublisher(Node):
         super().__init__('command_position_node')
         self.publisher_ = self.create_publisher(Float32MultiArray, '/target', 10)
         self.bool_subscriber = self.create_subscription(Bool, 'trigger_topic', self.bool_callback, 10)
-        self.string_subscriber = self.create_subscription(String, 'input_string_topic', self.string_callback, 10)
+        self.string_subscriber = self.create_subscription(String, 'unity/cmd', self.string_callback, 10)
         self.queue = deque()  # 결과를 저장할 큐
 
 
@@ -56,6 +56,9 @@ class CommandPositionPublisher(Node):
     def string_callback(self, msg: String):
         # 수신한 문자열을 파싱하여 큐에 추가
         try:
+            # [1; (-2.46, 0.00, -1.52); (-1.73, 0.00, -0.89); (-1.73, 0.52, -0.89)][2; (-2.46, 0.00, -1.52); (-1.73, 0.00, -0.89); (-1.73, 0.52, -0.89)] 형태
+            idx, startpos, endpos, height = eval(msg.data.split(';'))
+
             x1, y1, x2, y2 = map(float, msg.data.split(';'))
             self.queue = self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task)
         except ValueError:
