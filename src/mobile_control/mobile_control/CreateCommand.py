@@ -56,6 +56,8 @@ class CommandPositionPublisher(Node):
     def string_callback(self, msg):
         try:
             # [1, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)],[2, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)] 형태
+            if(msg.data[-1]==","):
+                msg.data = msg.data[:-1]
             data_list = msg.data.split("],[")
             data_list[0] = data_list[0][1:]
             data_list[-1] = data_list[-1][:-1]
