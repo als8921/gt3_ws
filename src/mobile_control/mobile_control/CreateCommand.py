@@ -54,17 +54,21 @@ class CommandPositionPublisher(Node):
         return position_queue
             
     def string_callback(self, msg):
-        # 수신한 문자열을 파싱하여 큐에 추가
         try:
             # [1, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)],[2, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)] 형태
-          
-            data = eval(msg.data)
-            idx, startpos, endpos, height = data
-            index = int(idx)
-            h = float(height[1])
-            x1, y1, x2, y2 = float(startpos[0]), float(startpos[2]), float(endpos[0]), float(endpos[2])
-            self.get_logger().info(f"{x1}, {y1}, {x2}, {y2}")
-            self.queue = self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task)
+            data_list = msg.data.split("],[")
+            data_list[0] = data_list[0][1:]
+            data_list[-1] = data_list[-1][:-1]
+
+            for item in data_list:
+                item = "[" + item + "]"
+                idx, startpos, endpos, height = eval(item)
+                index = int(idx)
+                h = float(height[1])
+
+                x1, y1, x2, y2 = float(startpos[0]), float(startpos[2]), float(endpos[0]), float(endpos[2])
+                self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
+                self.queue = self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task)
                 
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
