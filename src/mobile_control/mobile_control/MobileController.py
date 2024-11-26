@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from yhs_can_interfaces.msg import CtrlCmd
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Bool
 from rclpy.qos import qos_profile_sensor_data
 import tf_transformations
 import math
@@ -15,11 +15,11 @@ LinearKp = 0.73
 AngularKp = 1.5
 
 MinXLinearSpeed = 0.0       # [m/s]    후진기능을 넣을 시 음수로 전환
-MaxXLinearSpeed = 0.5       # [m/s]
+MaxXLinearSpeed = 0.3       # [m/s]
 MaxYLinearSpeed = 0.3       # [m/s]
 MaxAngularSpeed = 30        # [deg/s]
 
-ThetaErrorBoundary = 0.5     # 각도 명령 허용 오차
+ThetaErrorBoundary = 1     # 각도 명령 허용 오차
 ####################
 
 class State(Enum):
@@ -71,6 +71,7 @@ class ControlNode(Node):
         self.create_subscription(Odometry, '/odom3', self.odom_callback, qos_profile=qos_profile_sensor_data)
         self.create_subscription(Float32MultiArray, '/target', self.command_callback, 10)  # 목표 위치 및 자세 구독
         self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
+        self.bool_publisher = self.create_publisher(Bool, 'trigger_topic', 10)
 
         self.timer = self.create_timer(1.0 / Hz, self.timer_callback)
 
@@ -83,6 +84,8 @@ class ControlNode(Node):
         self.target_distance = 0.0
         self.state = State.Stop
         self.init_odom_state = False
+
+        self.lateral_direction = 0
 
 
     def odom_callback(self, msg):
@@ -178,19 +181,23 @@ class ControlNode(Node):
             current_distance = RelativeDistance(self.Pos, self.StartPos)
             _error = self.target_distance - current_distance
             
+            if(self.lateral_direction == 0):
+                angle_to_target = RelativeAngle(self.Pos, self.CmdPos)
+                _angle_error = NormalizeAngle(angle_to_target - self.Pos.theta)
+
+                self.lateral_direction = 1 if _angle_error >= 0 else -1  # 1 일때 +y 방향, -1 일때 -y 방향
+
+
             if _error <= 0.01:  # 목표 거리 도달 시
                 self.current_linear_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveLateral Finish {self.target_distance:.2f}[m]')
                 self.state = State.FinalRotate
+                self.lateral_direction = 0
                 # time.sleep(0.5)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
-                angle_to_target = RelativeAngle(self.Pos, self.CmdPos)
-                _angle_error = NormalizeAngle(angle_to_target - self.Pos.theta)
-
-                _direction = 1 if _angle_error >= 0 else -1  # 1 일때 +y 방향, -1 일때 -y 방향
-                _target_linear_speed = _direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
+                _target_linear_speed = self.lateral_direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
                 
                 # 선속도 점진적 증가 로직
                 if self.current_linear_speed < _target_linear_speed:
@@ -215,7 +222,8 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Distance : {RelativeDistance(self.CmdPos, self.Pos)}[m]')
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
-                # time.sleep(0.5)
+                time.sleep(0.5)
+                self.bool_publisher.publish(Bool(data = True))
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
