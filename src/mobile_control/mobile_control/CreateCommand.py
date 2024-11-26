@@ -4,9 +4,9 @@ from std_msgs.msg import Float32MultiArray, Bool, String
 from collections import deque
 import numpy as np
 
-D_horizontal = 0.5  # [m] 작업 위치 수평 거리
-D_vertical = 1.0    # [m] 작업 위치 수직 거리   
-D_task = 1.0        # [m] 작업 사이의 거리
+D_horizontal = 0  # [m] 작업 위치 수평 거리
+D_vertical = 0    # [m] 작업 위치 수직 거리   
+D_task = 0.6       # [m] 작업 사이의 거리
 
 class Gear:
     Disable = 0
@@ -53,20 +53,30 @@ class CommandPositionPublisher(Node):
         
         return position_queue
             
-    def string_callback(self, msg: String):
-        # 수신한 문자열을 파싱하여 큐에 추가
+    def string_callback(self, msg):
         try:
-            # [1; (-2.46, 0.00, -1.52); (-1.73, 0.00, -0.89); (-1.73, 0.52, -0.89)][2; (-2.46, 0.00, -1.52); (-1.73, 0.00, -0.89); (-1.73, 0.52, -0.89)] 형태
-          
-            data = eval(msg.data)
-            for idx, startpos, endpos, height in data:
-                index = idx
-                h = height[1]
-                x1, y1, x2, y2 = startpos[0], startpos[2], endpos[0], endpos[2]
-                self.queue = self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task)
+            # [1, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)],[2, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)] 형태
+            
+            # [1, (-0.55, 0.00, 1.99), (0.96, 0.00, 2.12), (0.96, 0.74, 2.12)],[2, (0.92, 0.00, 0.05), (-0.5, 0.00, 0.03), (0.92, 0.82, 0.05)]
+            if(msg.data[-1]==","):
+                msg.data = msg.data[:-1]
+            data_list = msg.data.split("],[")
+            data_list[0] = data_list[0][1:]
+            data_list[-1] = data_list[-1][:-1]
+
+            self.queue = deque()
+            for item in data_list:
+                item = "[" + item + "]"
+                idx, startpos, endpos, height = eval(item)
+                index = int(idx)
+                h = float(height[1])
+
+                x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
+                self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
+                self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task))
                 
         except ValueError:
-            self.get_logger().error('Invalid input format. Expected format: "x1;y1;x2;y2"')
+            self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
 
     def bool_callback(self, msg: Bool):
         if msg.data:  # True가 들어온 경우
