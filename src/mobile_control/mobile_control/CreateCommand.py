@@ -19,6 +19,7 @@ class CommandPositionPublisher(Node):
     def __init__(self):
         super().__init__('command_position_node')
         self.publisher_ = self.create_publisher(Float32MultiArray, '/target', 10)
+        self.bool_publisher = self.create_publisher(Bool, 'trigger_topic', 10)
         self.bool_subscriber = self.create_subscription(Bool, 'trigger_topic', self.bool_callback, 10)
         self.string_subscriber = self.create_subscription(String, 'unity/cmd', self.string_callback, 10)
         self.queue = deque()  # 결과를 저장할 큐
@@ -74,7 +75,7 @@ class CommandPositionPublisher(Node):
                 x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
                 self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
                 self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task))
-                
+            self.bool_publisher.publish(Bool(data = True))
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
 
