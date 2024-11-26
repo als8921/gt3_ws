@@ -7,7 +7,7 @@ class PublisherNode(Node):
     def __init__(self):
         super().__init__('publisher_node')
         self.bool_publisher = self.create_publisher(Bool, 'trigger_topic', 10)
-        self.string_publisher = self.create_publisher(String, 'input_string_topic', 10)
+        self.string_publisher = self.create_publisher(String, 'unity/cmd', 10)
 
         # UI 설정
         self.root = tk.Tk()
