@@ -18,3 +18,4 @@ for idx, startpos, endpos, height in a:
     print(startpos[0], startpos[2])
     print(endpos[0], endpos[2])
     print(height[1])
+    x1, y1, x2, y2 = startpos[0], startpos[2], endpos[0], endpos[2]

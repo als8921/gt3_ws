@@ -57,10 +57,14 @@ class CommandPositionPublisher(Node):
         # 수신한 문자열을 파싱하여 큐에 추가
         try:
             # [1; (-2.46, 0.00, -1.52); (-1.73, 0.00, -0.89); (-1.73, 0.52, -0.89)][2; (-2.46, 0.00, -1.52); (-1.73, 0.00, -0.89); (-1.73, 0.52, -0.89)] 형태
-            idx, startpos, endpos, height = eval(msg.data.split(';'))
-
-            x1, y1, x2, y2 = map(float, msg.data.split(';'))
-            self.queue = self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task)
+          
+            data = eval(msg.data)
+            for idx, startpos, endpos, height in data:
+                index = idx
+                h = height[1]
+                x1, y1, x2, y2 = startpos[0], startpos[2], endpos[0], endpos[2]
+                self.queue = self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task)
+                
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1;y1;x2;y2"')
 
