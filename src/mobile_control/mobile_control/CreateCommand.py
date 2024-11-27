@@ -5,7 +5,7 @@ from collections import deque
 import numpy as np
 
 D_horizontal = 0  # [m] 작업 위치 수평 거리
-D_vertical = 0    # [m] 작업 위치 수직 거리   
+D_vertical = 1.5    # [m] 작업 위치 수직 거리   
 D_task = 0.6       # [m] 작업 사이의 거리
 
 class Gear:
@@ -59,23 +59,24 @@ class CommandPositionPublisher(Node):
             # [1, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)],[2, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)] 형태
             
             # [1, (-0.55, 0.00, 1.99), (0.96, 0.00, 2.12), (0.96, 0.74, 2.12)],[2, (0.92, 0.00, 0.05), (-0.5, 0.00, 0.03), (0.92, 0.82, 0.05)]
-            if(msg.data[-1]==","):
-                msg.data = msg.data[:-1]
-            data_list = msg.data.split("],[")
-            data_list[0] = data_list[0][1:]
-            data_list[-1] = data_list[-1][:-1]
+            if(msg.data[0] == "["):
+                if(msg.data[-1]==","):
+                    msg.data = msg.data[:-1]
+                data_list = msg.data.split("],[")
+                data_list[0] = data_list[0][1:]
+                data_list[-1] = data_list[-1][:-1]
 
-            self.queue = deque()
-            for item in data_list:
-                item = "[" + item + "]"
-                idx, startpos, endpos, height = eval(item)
-                index = int(idx)
-                h = float(height[1])
+                self.queue = deque()
+                for item in data_list:
+                    item = "[" + item + "]"
+                    idx, startpos, endpos, height = eval(item)
+                    index = int(idx)
+                    h = float(height[1])
 
-                x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
-                self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
-                self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task))
-            self.bool_publisher.publish(Bool(data = True))
+                    x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
+                    self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
+                    self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task))
+                self.bool_publisher.publish(Bool(data = True))
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
 
