@@ -2,10 +2,11 @@ import sys
 import threading
 import numpy as np
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QLabel, QLineEdit
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mpl_toolkits.mplot3d import Axes3D  # 3D 플롯을 사용하기 위한 임포트
 from ros_node import ROSNode
+from std_srvs.srv import Trigger
 import rclpy
 
 class QtController(QMainWindow):
@@ -43,11 +44,29 @@ class QtController(QMainWindow):
         # 버튼 추가
         self.add_button = QPushButton("점 추가")
         self.reset_button = QPushButton("리셋")
+        self.trigger_button = QPushButton("리프트 명령 전송")
+        self.rotate_button = QPushButton("회전 적용")
+
+        # 회전 입력 필드 추가
+        self.roll_input = QLineEdit(self)
+        self.roll_input.setPlaceholderText("Roll (degrees)")
+        self.pitch_input = QLineEdit(self)
+        self.pitch_input.setPlaceholderText("Pitch (degrees)")
+        self.yaw_input = QLineEdit(self)
+        self.yaw_input.setPlaceholderText("Yaw (degrees)")
+
         self.add_button.clicked.connect(self.add_random_point)
         self.reset_button.clicked.connect(self.reset_plot)
+        self.trigger_button.clicked.connect(self.send_lift_command)
+        self.rotate_button.clicked.connect(self.apply_rotation)
 
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.reset_button)
+        button_layout.addWidget(self.trigger_button)  # 리프트 명령 버튼 추가
+        button_layout.addWidget(self.roll_input)
+        button_layout.addWidget(self.pitch_input)
+        button_layout.addWidget(self.yaw_input)
+        button_layout.addWidget(self.rotate_button)  # 회전 적용 버튼 추가
 
         layout.addLayout(button_layout)  # 오른쪽에 버튼 레이아웃 추가
 
@@ -77,6 +96,28 @@ class QtController(QMainWindow):
 
         # 업데이트된 플롯을 표시
         self.canvas.draw()
+
+    def apply_rotation(self):
+        # Roll, Pitch, Yaw 값을 가져와서 회전 적용
+        try:
+            roll = float(self.roll_input.text())
+            pitch = float(self.pitch_input.text())
+            yaw = float(self.yaw_input.text())
+            self.ros_node.rotate_points(roll, pitch, yaw)
+            self.points = self.ros_node.points
+            self.plot_points()  # 회전 후 점 다시 플로팅
+        except ValueError:
+            print("유효한 숫자를 입력하세요.")
+
+    def send_lift_command(self):
+        # 서비스 호출
+        future = self.ros_node.lift_client.call_async(Trigger.Request())
+        rclpy.spin_until_future_complete(self.ros_node, future)
+
+        if future.result() is not None:
+            self.get_logger().info(f'리프트 명령이 성공적으로 전송되었습니다: {future.result().message}')
+        else:
+            self.get_logger().error('리프트 명령 호출 실패')
 
     def run_ros_node(self):
         rclpy.init()
