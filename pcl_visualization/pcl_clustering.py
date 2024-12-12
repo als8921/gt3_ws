@@ -3,7 +3,12 @@ from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
 def cluster_pointcloud(pointcloud):
-    data = np.array(pointcloud)
+    temp_points = []
+    for point in pointcloud:
+        if(point != [0.0, 0.0, 0.0]):
+            temp_points.append(point)
+
+    data = np.array(temp_points)
     # 데이터 스케일링
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(data)

@@ -127,7 +127,7 @@ class QtController(QMainWindow):
         ax = self.figure.add_subplot(111, projection='3d')
         temp_points = []
         for point in self.points:
-            if(point != [0.0, 0.0, 0.0]):
+            if(point != (0.0, 0.0, 0.0)):
                 temp_points.append(point)
         self.points = temp_points
         
@@ -136,8 +136,10 @@ class QtController(QMainWindow):
                 closest, remaining = pcl_clustering.cluster_pointcloud(self.rotated_points)
                 closest = np.transpose(closest)
                 remaining = np.transpose(remaining)
-                ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
-                ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
+                if(closest.size > 0):
+                    ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
+                if(remaining.size > 0):
+                    ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
 
                 # points_array = np.transpose(self.rotated_points)
                 # ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
@@ -147,8 +149,10 @@ class QtController(QMainWindow):
                 closest, remaining = pcl_clustering.cluster_pointcloud(self.points)
                 closest = np.transpose(closest)
                 remaining = np.transpose(remaining)
-                ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
-                ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
+                if(closest.size > 0):
+                    ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
+                if(remaining.size > 0):
+                    ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
 
                 # points_array = np.transpose(self.points)
                 # ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
