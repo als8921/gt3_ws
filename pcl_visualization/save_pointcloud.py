@@ -25,15 +25,17 @@ class PointCloudSubscriber(Node):
         self.points = []
 
     def point_cloud_callback(self, msg):
-        # Convert PointCloud2 message to NumPy array
-        vertices = self.pointcloud2_to_numpy(msg)
-        vertices = np.transpose(vertices)
-        
-        # Print z-coordinates (optional)
-        print(vertices[2])
-        
-        # Store points
-        self.points.extend(vertices.tolist())
+        point_step = msg.point_step
+        data = np.frombuffer(msg.data, dtype=np.float32)
+
+        # 포인트 수 계산
+        num_points = len(data) // (point_step // 4)
+        self.points = []
+        for i in range(num_points):
+            y = -data[i * point_step // 4]  # x 좌표
+            x = data[i * point_step // 4 + 1]  # y 좌표
+            z = data[i * point_step // 4 + 2]  # z 좌표
+            self.points.append((x, y, z))
         
         # Save points to a text file
         self.save_points_to_file()
