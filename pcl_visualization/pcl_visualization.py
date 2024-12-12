@@ -22,6 +22,7 @@ class QtController(QMainWindow):
 
         # 초기 점 리스트
         self.points = []
+        self.rotated_points = []
 
     def init_ui(self):
         self.setWindowTitle("ROS Control Panel")
@@ -116,14 +117,18 @@ class QtController(QMainWindow):
         self.points = []
         self.plot_points()
 
-    def plot_points(self):
+    def plot_points(self, rotate = False):
         # 기존 플롯 초기화
         self.figure.clear()
         ax = self.figure.add_subplot(111, projection='3d')
-
-        if self.points:
-            points_array = np.transpose(self.points)
-            ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
+        if(rotate == True):
+            if self.rotated_points:
+                points_array = np.transpose(self.rotated_points)
+                ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
+        else:
+            if self.points:
+                points_array = np.transpose(self.points)
+                ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -138,9 +143,8 @@ class QtController(QMainWindow):
             roll = float(self.roll_input.text())
             pitch = float(self.pitch_input.text())
             yaw = float(self.yaw_input.text())
-            self.ros_node.rotate_points(roll, pitch, yaw)
-            self.points = self.ros_node.points
-            self.plot_points()  # 회전 후 점 다시 플로팅
+            self.rotated_points = self.ros_node.rotate_points(self.points, roll, pitch, yaw)
+            self.plot_points(rotate = True)  # 회전 후 점 다시 플로팅
         except ValueError:
             print("유효한 숫자를 입력하세요.")
 

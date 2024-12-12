@@ -32,7 +32,7 @@ class ROSNode(Node):
             z = data[i * point_step // 4 + 2]  # z 좌표
             self.points.append((x, y, z))
 
-    def rotate_points(self, roll, pitch, yaw):
+    def rotate_points(self, points, roll, pitch, yaw):
         # 라디안으로 변환
         roll = np.radians(roll)
         pitch = np.radians(pitch)
@@ -56,11 +56,11 @@ class ROSNode(Node):
 
         # 각 점 회전
         rotated_points = []
-        for point in self.points:
+        for point in points:
             rotated_point = R @ np.array(point)
             rotated_points.append(rotated_point)
 
-        self.points = rotated_points  # 회전된 점으로 업데이트
+        return rotated_points  # 회전된 점으로 업데이트
 
     def send_lift_command(self):
         request = Trigger.Request()  # Trigger 요청 생성
