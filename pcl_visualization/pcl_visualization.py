@@ -26,7 +26,7 @@ class QtController(QMainWindow):
         self.rotated_points = []
 
         # 기본 축 범위 설정
-        self.default_range = 10
+        self.default_range = 5
         self.current_range = self.default_range
         
         # 축 이동 오프셋 초기화
