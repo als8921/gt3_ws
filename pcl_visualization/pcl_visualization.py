@@ -10,6 +10,7 @@ from ros_node import ROSNode
 from std_srvs.srv import Trigger
 import rclpy
 from PyQt5.QtCore import Qt
+import pcl_clustering  
 
 class QtController(QMainWindow):
     def __init__(self):
@@ -94,19 +95,16 @@ class QtController(QMainWindow):
         """
         default_dir = 'pcl_visualization/pointcloud_data/pointcloud_data_0.txt'
         
-        try:
-            with open(default_dir, 'r') as f:
-                new_points = [
-                    [float(coord) for coord in line.strip().split()] 
-                    for line in f
-                ]
-            
-            self.points.extend(new_points)
-            self.plot_points()
-            print(f"Successfully loaded {len(new_points)} points from {default_dir}")
+        with open(default_dir, 'r') as f:
+            new_points = [
+                [float(coord) for coord in line.strip().split()] 
+                for line in f
+            ]
         
-        except Exception as e:
-            print(f"포인트 클라우드 파일을 로드하는 중 오류 발생: {e}")
+        self.points.extend(new_points)
+        self.plot_points()
+        print(f"Successfully loaded {len(new_points)} points from {default_dir}")
+        
 
     def add_random_point(self):
         # 랜덤 점 1개 추가
@@ -132,15 +130,28 @@ class QtController(QMainWindow):
             if(point != [0.0, 0.0, 0.0]):
                 temp_points.append(point)
         self.points = temp_points
-
+        
         if rotate:
             if self.rotated_points:
-                points_array = np.transpose(self.rotated_points)
-                ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
+                closest, remaining = pcl_clustering.cluster_pointcloud(self.rotated_points)
+                closest = np.transpose(closest)
+                remaining = np.transpose(remaining)
+                ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
+                ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
+
+                # points_array = np.transpose(self.rotated_points)
+                # ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
+                # ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
         else:
             if self.points:
-                points_array = np.transpose(self.points)
-                ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
+                closest, remaining = pcl_clustering.cluster_pointcloud(self.points)
+                closest = np.transpose(closest)
+                remaining = np.transpose(remaining)
+                ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
+                ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
+
+                # points_array = np.transpose(self.points)
+                # ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
