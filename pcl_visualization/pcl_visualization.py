@@ -127,6 +127,11 @@ class QtController(QMainWindow):
         # 기존 플롯 초기화
         self.figure.clear()
         ax = self.figure.add_subplot(111, projection='3d')
+        temp_points = []
+        for point in self.points:
+            if(point != [0.0, 0.0, 0.0]):
+                temp_points.append(point)
+        self.points = temp_points
 
         if rotate:
             if self.rotated_points:
