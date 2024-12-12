@@ -204,9 +204,9 @@ class QtController(QMainWindow):
             self.y_offset += 1
         elif event.key() == Qt.Key_A:  # Y 축 - 방향 이동
             self.y_offset -= 1
-        elif event.key() == Qt.Key_Q:  # Z 축 + 방향 이동
+        elif event.key() == Qt.Key_E:  # Z 축 + 방향 이동
             self.z_offset += 1
-        elif event.key() == Qt.Key_E:  # Z 축 - 방향 이동
+        elif event.key() == Qt.Key_Q:  # Z 축 - 방향 이동
             self.z_offset -= 1
         elif event.key() == Qt.Key_Minus:  # 축소
             self.current_range += 1
