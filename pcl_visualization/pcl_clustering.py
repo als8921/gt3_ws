@@ -4,9 +4,9 @@ from sklearn.preprocessing import StandardScaler
 
 def cluster_pointcloud(pointcloud):
     temp_points = []
-    for point in pointcloud:
-        if(point != [0.0, 0.0, 0.0]):
-            temp_points.append(point)
+    for x, y, z in pointcloud:
+        if(x != 0 and y != 0 and z !=0):
+            temp_points.append([x, y, z])
 
     data = np.array(temp_points)
     # 데이터 스케일링
@@ -14,7 +14,7 @@ def cluster_pointcloud(pointcloud):
     data_scaled = scaler.fit_transform(data)
 
     # DBSCAN 클러스터링
-    dbscan = DBSCAN(eps=0.3, min_samples=2)  # eps와 min_samples 조정
+    dbscan = DBSCAN(eps=0.2, min_samples=2)  # eps와 min_samples 조정
     labels = dbscan.fit_predict(data_scaled)
 
     # 클러스터 개수 (노이즈는 -1로 레이블링됨)
