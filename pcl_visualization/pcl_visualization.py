@@ -2,12 +2,14 @@ import sys
 import threading
 import numpy as np
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, 
+                             QHBoxLayout, QLabel, QLineEdit, QFileDialog)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from mpl_toolkits.mplot3d import Axes3D  # 3D 플롯을 사용하기 위한 임포트
+from mpl_toolkits.mplot3d import Axes3D
 from ros_node import ROSNode
 from std_srvs.srv import Trigger
 import rclpy
+import os
 
 class QtController(QMainWindow):
     def __init__(self):
@@ -41,11 +43,15 @@ class QtController(QMainWindow):
         # 버튼 레이아웃 설정
         button_layout = QVBoxLayout()
 
-        # 버튼 추가
+        # 기존 버튼들
         self.add_button = QPushButton("점 추가")
         self.reset_button = QPushButton("리셋")
         self.trigger_button = QPushButton("리프트 명령 전송")
         self.rotate_button = QPushButton("회전 적용")
+
+        # 새로운 포인트 클라우드 파일 로드 버튼 추가
+        self.load_pointcloud_button = QPushButton("포인트 클라우드 파일 로드")
+        self.load_pointcloud_button.clicked.connect(self.load_pointcloud_file)
 
         # 회전 입력 필드 추가
         self.roll_input = QLineEdit(self)
@@ -60,15 +66,44 @@ class QtController(QMainWindow):
         self.trigger_button.clicked.connect(self.send_lift_command)
         self.rotate_button.clicked.connect(self.apply_rotation)
 
+        # 버튼 레이아웃에 버튼 추가
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.reset_button)
-        button_layout.addWidget(self.trigger_button)  # 리프트 명령 버튼 추가
+        button_layout.addWidget(self.trigger_button)
+        button_layout.addWidget(self.load_pointcloud_button)  # 새 버튼 추가
         button_layout.addWidget(self.roll_input)
         button_layout.addWidget(self.pitch_input)
         button_layout.addWidget(self.yaw_input)
-        button_layout.addWidget(self.rotate_button)  # 회전 적용 버튼 추가
+        button_layout.addWidget(self.rotate_button)
 
         layout.addLayout(button_layout)  # 오른쪽에 버튼 레이아웃 추가
+
+    def load_pointcloud_file(self):
+        """
+        포인트 클라우드 텍스트 파일을 선택하고 로드합니다.
+        """
+        # 기본 디렉토리를 pointcloud_data로 설정
+        default_dir = 'pcl_visualization/pointcloud_data/pointcloud_data_0.txt'
+        
+        try:
+            # 파일에서 점 데이터 읽기
+            with open(default_dir, 'r') as f:
+                # 각 줄에서 x, y, z 좌표 읽기
+                new_points = [
+                    [float(coord) for coord in line.strip().split()] 
+                    for line in f
+                ]
+            
+            # 점을 self.points에 추가
+            self.points.extend(new_points)
+            
+            # 새로운 점들로 플롯 업데이트
+            self.plot_points()
+            
+            print(f"Successfully loaded {len(new_points)} points from {default_dir}")
+        
+        except Exception as e:
+            print(f"포인트 클라우드 파일을 로드하는 중 오류 발생: {e}")
 
     def add_random_point(self):
         # 랜덤 점 1개 추가
