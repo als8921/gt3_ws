@@ -72,7 +72,7 @@ class QtController(QMainWindow):
         self.yaw_input = QLineEdit(self)
         self.yaw_input.setPlaceholderText("Yaw (degrees)")
 
-        self.add_button.clicked.connect(self.add_random_point)
+        self.add_button.clicked.connect(self.get_pointcloud)
         self.reset_button.clicked.connect(self.reset_plot)
         self.trigger_button.clicked.connect(self.send_lift_command)
         self.rotate_button.clicked.connect(self.apply_rotation)
@@ -106,8 +106,7 @@ class QtController(QMainWindow):
         print(f"Successfully loaded {len(new_points)} points from {default_dir}")
         
 
-    def add_random_point(self):
-        # 랜덤 점 1개 추가
+    def get_pointcloud(self):
         self.points.extend(self.ros_node.points)
         print(len(self.points))
         self.plot_points()
@@ -190,11 +189,6 @@ class QtController(QMainWindow):
         else:
             self.get_logger().error('리프트 명령 호출 실패')
 
-    def run_ros_node(self):
-        rclpy.init()
-        self.ros_node = ROSNode()
-        rclpy.spin(self.ros_node)
-
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_S:  # X 축 + 방향 이동
             self.x_offset += 1
@@ -230,6 +224,11 @@ class QtController(QMainWindow):
         self.ros_node.destroy_node()
         rclpy.shutdown()
         event.accept()
+
+    def run_ros_node(self):
+        rclpy.init()
+        self.ros_node = ROSNode()
+        rclpy.spin(self.ros_node)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
