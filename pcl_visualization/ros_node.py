@@ -27,17 +27,17 @@ class ROSNode(Node):
         self.arm_pos = [0, 0, 0, 0, 0, 0]       # [x, y, z, roll, pitch, yaw]
 
     def pose_callback(self, msg):
-        x, y, z, r, p, y = eval(msg.data.split(";")[0])
-        self.arm_pos = [x, y, z, r, p, y]
+        x, y, z, r, p, yaw = eval(msg.data.split(";")[0])
+        self.arm_pos = [x, y, z, r, p, yaw]
 
     def odom_callback(self, msg):
         pos = msg.pose.pose.position
         ori = msg.pose.pose.orientation
 
         x, y, z = pos.x, pos.y, pos.z
-        r, p, y = tf_transformations.euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
+        r, p, yaw = tf_transformations.euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
 
-        self.robot_pos = [x, y, z, r, p, y]
+        self.robot_pos = [x, y, z, r, p, yaw]
 
     def point_cloud_callback(self, msg):
         point_step = msg.point_step
@@ -54,9 +54,9 @@ class ROSNode(Node):
 
     def calculate_end_effector_position(self):
         # 로봇의 현재 위치
-        robot_x, robot_y, robot_z, robot_r, robot_p, robot_y = self.robot_pos
+        robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.robot_pos
         # 로봇팔 원점의 상대 위치 (여기서는 예시로 설정)
-        arm_x, arm_y, arm_z, arm_r, arm_p, arm_y = self.arm_pos  # [x, y, z, roll, pitch, yaw]
+        arm_x, arm_y, arm_z, arm_r, arm_p, arm_yaw = self.arm_pos  # [x, y, z, roll, pitch, yaw]
 
         # 로봇팔 원점의 절대 좌표 계산
         arm_origin_x = robot_x + arm_x
@@ -74,9 +74,13 @@ class ROSNode(Node):
         # 자세 (orientation) 계산
         end_effector_r = robot_r + arm_r + end_offset[3]
         end_effector_p = robot_p + arm_p + end_offset[4]
-        end_effector_y = robot_y + arm_y + end_offset[5]
+        end_effector_yaw = robot_yaw + arm_yaw + end_offset[5]
 
-        return (end_effector_x, end_effector_y, end_effector_z, end_effector_r, end_effector_p, end_effector_y)
+        return (end_effector_x, end_effector_y, end_effector_z, end_effector_r, end_effector_p, end_effector_yaw)
+
+
+    def transform_points(self, x, y, z, r, p, yaw):
+        pass
 
     def rotate_points(self, points, roll, pitch, yaw):
         # 라디안으로 변환
