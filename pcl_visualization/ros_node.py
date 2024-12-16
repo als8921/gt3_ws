@@ -15,11 +15,9 @@ class ROSNode(Node):
         self.lift_client = self.create_client(Trigger, 'lift_command')
 
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
-        self.image_sub = self.create_subscription(Image, '/detectImage', self.image_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
         self.robotpose_sub = self.create_subscription(String, '/current_pose', self.pose_callback, 10)
         self.points = []
-        self.latest_image = None
 
         # 서비스가 준비될 때까지 대기
         # while not self.lift_client.wait_for_service(timeout_sec=1.0):
@@ -39,13 +37,6 @@ class ROSNode(Node):
         r, p, y = tf_transformations.euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
 
         self.robot_pos = [x, y, z, r, p, y]
-
-    def image_callback(self, msg):
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-            self.latest_image = cv_image
-        except Exception as e:
-            self.get_logger().error(f'Image conversion error: {e}')
 
     def point_cloud_callback(self, msg):
         point_step = msg.point_step
