@@ -3,7 +3,10 @@ import rclpy
 import numpy as np
 from rclpy.node import Node
 from std_srvs.srv import Trigger
+from std_msgs.msg import String
 from sensor_msgs.msg import PointCloud2, Image
+from nav_msgs.msg import Odometry
+import tf_transformations
 
 class ROSNode(Node):
     def __init__(self):
@@ -14,12 +17,30 @@ class ROSNode(Node):
 
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.image_sub = self.create_subscription(Image, '/detectImage', self.image_callback, 10)
+        self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
+        self.robotpose_sub = self.create_subscription(String, '/currentpose', self.pose_callback, 10)
         self.points = []
         self.latest_image = None
 
         # 서비스가 준비될 때까지 대기
         # while not self.lift_client.wait_for_service(timeout_sec=1.0):
         #     self.get_logger().info('서비스를 기다리는 중...')
+        self.robot_pos = [0, 0, 0, 0, 0, 0]     # [x, y, z, roll, pitch, yaw]
+        self.arm_pos = [0, 0, 0, 0, 0, 0]       # [x, y, z, roll, pitch, yaw]
+
+    def pose_callback(self, msg):
+        pass
+
+    def odom_callback(self, msg):
+        pos = msg.pose.pose.position
+        ori = msg.pose.pose.orientation
+
+        x, y, z = pos.x, pos.y, pos.z
+        r, p, y = tf_transformations.euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
+
+        self.robot_pos = [x, y, z, r, p, y]
+        print(self.robot_pos)
+        pass
 
     def image_callback(self, msg):
         try:
