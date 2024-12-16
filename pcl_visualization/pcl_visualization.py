@@ -63,6 +63,10 @@ class QtController(QMainWindow):
         self.load_pointcloud_button = QPushButton("포인트 클라우드 파일 로드")
         self.load_pointcloud_button.clicked.connect(self.load_pointcloud_file)
 
+        # 종료 버튼 추가
+        self.exit_button = QPushButton("종료")
+        self.exit_button.clicked.connect(self.close_application)
+
         # 회전 입력 필드 추가
         self.roll_input = QLineEdit(self)
         self.roll_input.setPlaceholderText("Roll (degrees)")
@@ -83,6 +87,7 @@ class QtController(QMainWindow):
         button_layout.addWidget(self.pitch_input)
         button_layout.addWidget(self.yaw_input)
         button_layout.addWidget(self.rotate_button)
+        button_layout.addWidget(self.exit_button)  # 종료 버튼 추가
 
         layout.addLayout(button_layout)  # 오른쪽에 버튼 레이아웃 추가
 
@@ -101,7 +106,12 @@ class QtController(QMainWindow):
         self.points.extend(new_points)
         self.plot_points()
         print(f"Successfully loaded {len(new_points)} points from {default_dir}")
-        
+
+    def close_application(self):
+        """ 애플리케이션 종료를 처리합니다. """
+        self.close()
+        self.ros_node.destroy_node()
+        rclpy.shutdown()
 
     def get_pointcloud(self):
         self.points.extend(self.ros_node.points)
@@ -124,42 +134,16 @@ class QtController(QMainWindow):
         
         if rotate:
             if self.rotated_points:
-                ### Clustering
-                # closest, remaining = pcl_clustering.cluster_pointcloud(self.rotated_points)
-                # closest = np.transpose(closest)
-                # remaining = np.transpose(remaining)
-                # if(closest.size > 0):
-                #     ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
-                # if(remaining.size > 0):
-                #     ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
-                ###
-
                 points_array = np.transpose(self.rotated_points)
-                ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
                 ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
         else:
             if self.points:
-                ### Clustering
-                # closest, remaining = pcl_clustering.cluster_pointcloud(self.points)
-                # closest = np.transpose(closest)
-                # remaining = np.transpose(remaining)
-                # if(closest.size > 0):
-                #     ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
-                # if(remaining.size > 0):
-                #     ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
-                ###
-
                 points_array = np.transpose(self.points)
                 ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
-
-        # 고정된 축 범위 설정
-        # ax.set_xlim(-self.current_range + self.x_offset, self.current_range + self.x_offset)
-        # ax.set_ylim(-self.current_range + self.y_offset, self.current_range + self.y_offset)
-        # ax.set_zlim(-self.current_range + self.z_offset, self.current_range + self.z_offset)
 
         # 업데이트된 플롯을 표시
         self.canvas.draw()
@@ -205,11 +189,6 @@ class QtController(QMainWindow):
 
         # 업데이트된 플롯을 표시
         self.canvas.draw()
-
-    def closeEvent(self, event):
-        self.ros_node.destroy_node()
-        rclpy.shutdown()
-        event.accept()
 
     def run_ros_node(self):
         rclpy.init()
