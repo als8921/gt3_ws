@@ -18,6 +18,7 @@ class ROSNode(Node):
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
         self.robotpose_sub = self.create_subscription(String, '/current_pose', self.pose_callback, 10)
         self.points = []
+        
 
         # 서비스가 준비될 때까지 대기
         # while not self.lift_client.wait_for_service(timeout_sec=1.0):
@@ -53,17 +54,17 @@ class ROSNode(Node):
 
     def calculate_end_effector_position(self):
         # 로봇의 현재 위치
-        robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.robot_pos
+        robot_x, robot_y, robot_z, robot_r, robot_p, robot_y = self.robot_pos
         # 로봇팔 원점의 상대 위치 (여기서는 예시로 설정)
-        arm_offset = self.arm_pos  # [x, y, z, roll, pitch, yaw]
+        arm_x, arm_y, arm_z, arm_r, arm_p, arm_y = self.arm_pos  # [x, y, z, roll, pitch, yaw]
 
         # 로봇팔 원점의 절대 좌표 계산
-        arm_origin_x = robot_x + arm_offset[0]
-        arm_origin_y = robot_y + arm_offset[1]
-        arm_origin_z = robot_z + arm_offset[2]
+        arm_origin_x = robot_x + arm_x
+        arm_origin_y = robot_y + arm_y
+        arm_origin_z = robot_z + arm_z
 
-        # 로봇팔 끝점의 상대 위치 (여기서는 예시로 설정)
-        end_offset = [0.5, 0.0, 0.0, 0.0, 0.0, 0.0]  # [x, y, z, roll, pitch, yaw]
+        # 로봇팔의 상대 위치
+        end_offset = [0.3, 0.0, 0.5]  # [x, y, z, roll, pitch, yaw]
 
         # 로봇팔 끝점의 절대 좌표 계산
         end_effector_x = arm_origin_x + end_offset[0]
@@ -71,9 +72,9 @@ class ROSNode(Node):
         end_effector_z = arm_origin_z + end_offset[2]
 
         # 자세 (orientation) 계산
-        end_effector_r = robot_r + arm_offset[3] + end_offset[3]
-        end_effector_p = robot_p + arm_offset[4] + end_offset[4]
-        end_effector_y = robot_yaw + arm_offset[5] + end_offset[5]
+        end_effector_r = robot_r + arm_r + end_offset[3]
+        end_effector_p = robot_p + arm_p + end_offset[4]
+        end_effector_y = robot_y + arm_y + end_offset[5]
 
         return (end_effector_x, end_effector_y, end_effector_z, end_effector_r, end_effector_p, end_effector_y)
 
