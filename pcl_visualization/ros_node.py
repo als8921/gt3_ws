@@ -5,11 +5,15 @@ from std_srvs.srv import Trigger
 from std_msgs.msg import String
 from sensor_msgs.msg import PointCloud2, Image
 from nav_msgs.msg import Odometry
+
+import tf2_ros
 import tf_transformations
 
 class ROSNode(Node):
     def __init__(self):
         super().__init__('my_ros_node')
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
@@ -21,7 +25,6 @@ class ROSNode(Node):
     def pose_callback(self, msg):
         x, y, z, r, p, yaw = eval(msg.data.split(";")[0])
         self.arm_pos = [x / 1000, y / 1000, z / 1000, 0, 0, 0]
-        print(r, p, yaw)
 
     def odom_callback(self, msg):
         pos = msg.pose.pose.position
@@ -31,6 +34,7 @@ class ROSNode(Node):
         r, p, yaw = tf_transformations.euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
 
         self.robot_pos = [x, y, z, r, p, yaw]
+        print("robot", [x, y, z, r, p, yaw])
 
     def point_cloud_callback(self, msg):
         point_step = msg.point_step
@@ -40,9 +44,9 @@ class ROSNode(Node):
         num_points = len(data) // (point_step // 4)
         points = []
         for i in range(num_points):
-            # 포인트 데이터를 가져옵니다.
-            x = data[i * point_step // 4]
-            y = data[i * point_step // 4 + 1]
+            # x, y, z 축 위치 변경
+            y = -data[i * point_step // 4]
+            x = data[i * point_step // 4 + 1]
             z = data[i * point_step // 4 + 2]
             points.append((x, y, z))
 
@@ -51,15 +55,27 @@ class ROSNode(Node):
         self.points = self.transform_points(points, end_effector_position)
 
     def calculate_end_effector_position(self):
+        try:
+            target_frame = "tcp_camera_link"
+            source_frame = "base_link"
+            transform = self.tf_buffer.lookup_transform(source_frame, target_frame, rclpy.time.Time())
+            
+            x, y, z = transform.transform.translation.x, transform.transform.translation.y, transform.transform.translation.z
+            r, p, yaw = tf_transformations.euler_from_quaternion([transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z, transform.transform.rotation.w])
+
+        except:
+            x, y, z, r, p, yaw = 0, 0, 0, 0, 0, 0
+
+        print(x, y, z, np.degrees([r, p, yaw]))
         # 로봇의 현재 위치
         robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.robot_pos
         # 로봇팔 원점의 상대 위치 (여기서는 예시로 설정)
         arm_offset = self.arm_pos  # [x, y, z, roll, pitch, yaw]
 
         # 로봇팔 원점의 절대 좌표 계산
-        arm_origin_x = robot_x + arm_offset[0]
-        arm_origin_y = robot_y + arm_offset[1]
-        arm_origin_z = robot_z + arm_offset[2]
+        arm_origin_x = robot_x + x
+        arm_origin_y = robot_y + y
+        arm_origin_z = robot_z + z
 
         # 로봇팔 끝점의 상대 위치 (여기서는 예시로 설정)
         end_offset = [0.5, 0.0, 0.0, 0.0, 0.0, 0.0]  # [x, y, z, roll, pitch, yaw]
@@ -70,9 +86,9 @@ class ROSNode(Node):
         end_effector_z = arm_origin_z + end_offset[2]
 
         # 자세 (orientation) 계산
-        end_effector_r = robot_r + arm_offset[3] + end_offset[3]
-        end_effector_p = robot_p + arm_offset[4] + end_offset[4]
-        end_effector_yaw = robot_yaw + arm_offset[5] + end_offset[5]
+        end_effector_r = robot_r + r + end_offset[3]
+        end_effector_p = robot_p + p + end_offset[4]
+        end_effector_yaw = robot_yaw + yaw + end_offset[5]
 
         return (end_effector_x, end_effector_y, end_effector_z, end_effector_r, end_effector_p, end_effector_yaw)
 
