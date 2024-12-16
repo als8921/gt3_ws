@@ -1,4 +1,3 @@
-# my_ros_node.py
 import rclpy
 import numpy as np
 from rclpy.node import Node
@@ -48,7 +47,6 @@ class ROSNode(Node):
         except Exception as e:
             self.get_logger().error(f'Image conversion error: {e}')
 
-
     def point_cloud_callback(self, msg):
         point_step = msg.point_step
         data = np.frombuffer(msg.data, dtype=np.float32)
@@ -61,6 +59,32 @@ class ROSNode(Node):
             x = data[i * point_step // 4 + 1]  # y 좌표
             z = data[i * point_step // 4 + 2]  # z 좌표
             self.points.append((x, y, z))
+
+    def calculate_end_effector_position(self):
+        # 로봇의 현재 위치
+        robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.robot_pos
+        # 로봇팔 원점의 상대 위치 (여기서는 예시로 설정)
+        arm_offset = self.arm_pos  # [x, y, z, roll, pitch, yaw]
+
+        # 로봇팔 원점의 절대 좌표 계산
+        arm_origin_x = robot_x + arm_offset[0]
+        arm_origin_y = robot_y + arm_offset[1]
+        arm_origin_z = robot_z + arm_offset[2]
+
+        # 로봇팔 끝점의 상대 위치 (여기서는 예시로 설정)
+        end_offset = [0.5, 0.0, 0.0, 0.0, 0.0, 0.0]  # [x, y, z, roll, pitch, yaw]
+
+        # 로봇팔 끝점의 절대 좌표 계산
+        end_effector_x = arm_origin_x + end_offset[0]
+        end_effector_y = arm_origin_y + end_offset[1]
+        end_effector_z = arm_origin_z + end_offset[2]
+
+        # 자세 (orientation) 계산
+        end_effector_r = robot_r + arm_offset[3] + end_offset[3]
+        end_effector_p = robot_p + arm_offset[4] + end_offset[4]
+        end_effector_y = robot_yaw + arm_offset[5] + end_offset[5]
+
+        return (end_effector_x, end_effector_y, end_effector_z, end_effector_r, end_effector_p, end_effector_y)
 
     def rotate_points(self, points, roll, pitch, yaw):
         # 라디안으로 변환
@@ -113,3 +137,6 @@ def start_ros_node():
     node.spin()
     node.destroy_node()
     rclpy.shutdown()
+
+if __name__ == '__main__':
+    start_ros_node()
