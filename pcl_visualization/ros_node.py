@@ -23,7 +23,8 @@ class ROSNode(Node):
 
     def pose_callback(self, msg):
         x, y, z, r, p, yaw = eval(msg.data.split(";")[0])
-        self.arm_pos = [x, y, z, r, p, yaw]
+        self.arm_pos = [x / 1000, y / 1000, z / 1000, 0, 0, 0]
+        print(r, p, yaw)
 
     def odom_callback(self, msg):
         pos = msg.pose.pose.position
@@ -51,9 +52,6 @@ class ROSNode(Node):
         # 방금 계산한 끝점 위치를 구하고 포인트 클라우드를 변환합니다.
         end_effector_position = self.calculate_end_effector_position()
         self.points = self.transform_points(points, end_effector_position)
-
-        # 변환된 포인트 클라우드를 출력 (디버깅용)
-        self.get_logger().info(f'Transformed Points: {self.points}')
 
     def calculate_end_effector_position(self):
         # 로봇의 현재 위치
@@ -100,10 +98,6 @@ class ROSNode(Node):
         return transformed_points
 
     def get_rotation_matrix(self, roll, pitch, yaw):
-        # 라디안으로 변환
-        roll = np.radians(roll)
-        pitch = np.radians(pitch)
-        yaw = np.radians(yaw)
 
         # 회전 행렬 정의
         R_x = np.array([[1, 0, 0],
