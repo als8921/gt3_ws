@@ -11,9 +11,6 @@ class ROSNode(Node):
     def __init__(self):
         super().__init__('my_ros_node')
 
-        # Trigger 서비스 클라이언트 생성
-        self.lift_client = self.create_client(Trigger, 'lift_command')
-
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
         self.robotpose_sub = self.create_subscription(String, '/current_pose', self.pose_callback, 10)
@@ -144,18 +141,6 @@ class ROSNode(Node):
             rotated_points.append(rotated_point)
 
         return rotated_points  # 회전된 점으로 업데이트
-
-    def send_lift_command(self):
-        request = Trigger.Request()  # Trigger 요청 생성
-
-        # 서비스 요청 보내기
-        future = self.lift_client.call_async(request)
-        rclpy.spin_until_future_complete(self, future)
-
-        if future.result() is not None:
-            self.get_logger().info(f'리프트 명령이 성공적으로 전송되었습니다: {future.result().message}')
-        else:
-            self.get_logger().error('리프트 명령 호출 실패')
 
     def spin(self):
         rclpy.spin(self)
