@@ -18,7 +18,7 @@ class ROSNode(Node):
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.image_sub = self.create_subscription(Image, '/detectImage', self.image_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
-        self.robotpose_sub = self.create_subscription(String, '/currentpose', self.pose_callback, 10)
+        self.robotpose_sub = self.create_subscription(String, '/current_pose', self.pose_callback, 10)
         self.points = []
         self.latest_image = None
 
@@ -29,7 +29,8 @@ class ROSNode(Node):
         self.arm_pos = [0, 0, 0, 0, 0, 0]       # [x, y, z, roll, pitch, yaw]
 
     def pose_callback(self, msg):
-        pass
+        x, y, z, r, p, y = eval(msg.data.split(";")[0])
+        self.arm_pos = [x, y, z, r, p, y]
 
     def odom_callback(self, msg):
         pos = msg.pose.pose.position
@@ -39,8 +40,6 @@ class ROSNode(Node):
         r, p, y = tf_transformations.euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
 
         self.robot_pos = [x, y, z, r, p, y]
-        print(self.robot_pos)
-        pass
 
     def image_callback(self, msg):
         try:
