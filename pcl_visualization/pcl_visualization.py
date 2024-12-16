@@ -57,7 +57,6 @@ class QtController(QMainWindow):
         # 기존 버튼들
         self.add_button = QPushButton("점 추가")
         self.reset_button = QPushButton("리셋")
-        self.trigger_button = QPushButton("리프트 명령 전송")
         self.rotate_button = QPushButton("회전 적용")
 
         # 새로운 포인트 클라우드 파일 로드 버튼 추가
@@ -74,13 +73,11 @@ class QtController(QMainWindow):
 
         self.add_button.clicked.connect(self.get_pointcloud)
         self.reset_button.clicked.connect(self.reset_plot)
-        self.trigger_button.clicked.connect(self.send_lift_command)
         self.rotate_button.clicked.connect(self.apply_rotation)
 
         # 버튼 레이아웃에 버튼 추가
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.reset_button)
-        button_layout.addWidget(self.trigger_button)
         button_layout.addWidget(self.load_pointcloud_button)  # 새 버튼 추가
         button_layout.addWidget(self.roll_input)
         button_layout.addWidget(self.pitch_input)
@@ -177,16 +174,6 @@ class QtController(QMainWindow):
             self.plot_points(rotate=True)  # 회전 후 점 다시 플로팅
         except ValueError:
             print("유효한 숫자를 입력하세요.")
-
-    def send_lift_command(self):
-        # 서비스 호출
-        future = self.ros_node.lift_client.call_async(Trigger.Request())
-        rclpy.spin_until_future_complete(self.ros_node, future)
-
-        if future.result() is not None:
-            self.get_logger().info(f'리프트 명령이 성공적으로 전송되었습니다: {future.result().message}')
-        else:
-            self.get_logger().error('리프트 명령 호출 실패')
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_S:  # X 축 + 방향 이동
