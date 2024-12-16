@@ -160,9 +160,9 @@ class QtController(QMainWindow):
         ax.set_zlabel('Z')
 
         # 고정된 축 범위 설정
-        ax.set_xlim(-self.current_range + self.x_offset, self.current_range + self.x_offset)
-        ax.set_ylim(-self.current_range + self.y_offset, self.current_range + self.y_offset)
-        ax.set_zlim(-self.current_range + self.z_offset, self.current_range + self.z_offset)
+        # ax.set_xlim(-self.current_range + self.x_offset, self.current_range + self.x_offset)
+        # ax.set_ylim(-self.current_range + self.y_offset, self.current_range + self.y_offset)
+        # ax.set_zlim(-self.current_range + self.z_offset, self.current_range + self.z_offset)
 
         # 업데이트된 플롯을 표시
         self.canvas.draw()
