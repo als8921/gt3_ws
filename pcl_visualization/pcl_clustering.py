@@ -14,7 +14,7 @@ def cluster_pointcloud(pointcloud):
     data_scaled = scaler.fit_transform(data)
 
     # DBSCAN 클러스터링
-    dbscan = DBSCAN(eps=0.2, min_samples=2)  # eps와 min_samples 조정
+    dbscan = DBSCAN(eps=0.2, min_samples=10)  # eps와 min_samples 조정
     labels = dbscan.fit_predict(data_scaled)
 
     # 클러스터 개수 (노이즈는 -1로 레이블링됨)
