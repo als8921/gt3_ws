@@ -17,14 +17,9 @@ class ROSNode(Node):
 
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
-        self.robotpose_sub = self.create_subscription(String, '/current_pose', self.pose_callback, 10)
         self.points = []
         self.robot_pos = [0, 0, 0, 0, 0, 0]     # [x, y, z, roll, pitch, yaw]
-        self.arm_pos = [0, 0, 0, 0, 0, 0]       # [x, y, z, roll, pitch, yaw]
 
-    def pose_callback(self, msg):
-        x, y, z, r, p, yaw = eval(msg.data.split(";")[0])
-        self.arm_pos = [x / 1000, y / 1000, z / 1000, 0, 0, 0]
 
     def odom_callback(self, msg):
         pos = msg.pose.pose.position
@@ -69,8 +64,6 @@ class ROSNode(Node):
         print(x, y, z, np.degrees([r, p, yaw]))
         # 로봇의 현재 위치
         robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.robot_pos
-        # 로봇팔 원점의 상대 위치 (여기서는 예시로 설정)
-        arm_offset = self.arm_pos  # [x, y, z, roll, pitch, yaw]
 
         # 로봇팔 원점의 절대 좌표 계산
         arm_origin_x = robot_x + x
