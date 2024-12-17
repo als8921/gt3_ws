@@ -131,15 +131,22 @@ class QtController(QMainWindow):
         # 기존 플롯 초기화
         self.figure.clear()
         ax = self.figure.add_subplot(111, projection='3d')
-        
+        closest = []
+        remaining = []
         if rotate:
             if self.rotated_points:
-                points_array = np.transpose(self.rotated_points)
-                ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
+                closest, remaining = pcl_clustering.cluster_pointcloud(self.rotated_points)
         else:
             if self.points:
-                points_array = np.transpose(self.points)
-                ax.scatter(points_array[0], points_array[1], points_array[2], c='r', marker='o')
+                closest, remaining = pcl_clustering.cluster_pointcloud(self.points)
+
+        if(closest):     
+            closest = np.transpose(closest)
+            ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
+
+        if(remaining):     
+            remaining = np.transpose(remaining)
+            ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
