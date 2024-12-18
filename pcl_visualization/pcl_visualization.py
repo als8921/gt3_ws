@@ -3,7 +3,7 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, 
-                             QHBoxLayout, QLabel, QLineEdit)
+                             QHBoxLayout, QLabel, QLineEdit, QFileDialog)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mpl_toolkits.mplot3d import Axes3D
 from ros_node import ROSNode
@@ -58,10 +58,14 @@ class QtController(QMainWindow):
         self.add_button = QPushButton("점 추가")
         self.reset_button = QPushButton("리셋")
         self.rotate_button = QPushButton("회전 적용")
-
+        
         # 새로운 포인트 클라우드 파일 로드 버튼 추가
         self.load_pointcloud_button = QPushButton("포인트 클라우드 파일 로드")
         self.load_pointcloud_button.clicked.connect(self.load_pointcloud_file)
+
+        # 포인트 저장 버튼 추가
+        self.save_pointcloud_button = QPushButton("포인트 저장")
+        self.save_pointcloud_button.clicked.connect(self.save_pointcloud_file)
 
         # 종료 버튼 추가
         self.exit_button = QPushButton("종료")
@@ -83,6 +87,7 @@ class QtController(QMainWindow):
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.reset_button)
         button_layout.addWidget(self.load_pointcloud_button)  # 새 버튼 추가
+        button_layout.addWidget(self.save_pointcloud_button)  # 포인트 저장 버튼 추가
         button_layout.addWidget(self.roll_input)
         button_layout.addWidget(self.pitch_input)
         button_layout.addWidget(self.yaw_input)
@@ -92,9 +97,7 @@ class QtController(QMainWindow):
         layout.addLayout(button_layout)  # 오른쪽에 버튼 레이아웃 추가
 
     def load_pointcloud_file(self):
-        """
-        포인트 클라우드 텍스트 파일을 선택하고 로드합니다.
-        """
+        """포인트 클라우드 텍스트 파일을 선택하고 로드합니다."""
         default_dir = 'pcl_visualization/pointcloud_data/pointcloud_data_0.txt'
         
         with open(default_dir, 'r') as f:
@@ -107,8 +110,16 @@ class QtController(QMainWindow):
         self.plot_points()
         print(f"Successfully loaded {len(new_points)} points from {default_dir}")
 
+    def save_pointcloud_file(self):
+        """현재 포인트를 텍스트 파일로 저장합니다."""
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Point Cloud", "", "Text Files (*.txt);;All Files (*)", options=options)
+        if file_name:
+            np.savetxt(file_name, self.points, fmt='%f', delimiter=' ')
+            print(f"Successfully saved {len(self.points)} points to {file_name}")
+
     def close_application(self):
-        """ 애플리케이션 종료를 처리합니다. """
+        """애플리케이션 종료를 처리합니다."""
         self.close()
         self.ros_node.destroy_node()
         rclpy.shutdown()
@@ -140,11 +151,11 @@ class QtController(QMainWindow):
             if self.points:
                 closest, remaining = pcl_clustering.cluster_pointcloud(self.points)
 
-        if(closest):     
+        if closest:     
             closest = np.transpose(closest)
             ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
 
-        if(remaining):     
+        if remaining:     
             remaining = np.transpose(remaining)
             ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
 
