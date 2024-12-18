@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mpl_toolkits.mplot3d import Axes3D
 from ros_node import ROSNode
-from std_srvs.srv import Trigger
 import rclpy
 from PyQt5.QtCore import Qt
 import pcl_clustering  
@@ -98,17 +97,18 @@ class QtController(QMainWindow):
 
     def load_pointcloud_file(self):
         """포인트 클라우드 텍스트 파일을 선택하고 로드합니다."""
-        default_dir = 'pcl_visualization/pointcloud_data/pointcloud_data_0.txt'
-        
-        with open(default_dir, 'r') as f:
-            new_points = [
-                [float(coord) for coord in line.strip().split()] 
-                for line in f
-            ]
-        
-        self.points.extend(new_points)
-        self.plot_points()
-        print(f"Successfully loaded {len(new_points)} points from {default_dir}")
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getOpenFileName(self, "포인트 클라우드 파일 선택", "", "Text Files (*.txt);;All Files (*)", options=options)
+        if file_name:
+            with open(file_name, 'r') as f:
+                new_points = [
+                    [float(coord) for coord in line.strip().split()] 
+                    for line in f
+                ]
+            
+            self.points.extend(new_points)
+            self.plot_points()
+            print(f"Successfully loaded {len(new_points)} points from {file_name}")
 
     def save_pointcloud_file(self):
         """현재 포인트를 텍스트 파일로 저장합니다."""
