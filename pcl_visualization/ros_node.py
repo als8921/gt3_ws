@@ -29,7 +29,6 @@ class ROSNode(Node):
         r, p, yaw = tf_transformations.euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
 
         self.robot_pos = [x, y, z, r, p, yaw]
-        print("robot", [x, y, z, r, p, yaw])
 
     def point_cloud_callback(self, msg):
         point_step = msg.point_step
@@ -61,7 +60,7 @@ class ROSNode(Node):
         except:
             x, y, z, r, p, yaw = 0, 0, 0, 0, 0, 0
 
-        print(x, y, z, np.degrees([r, p, yaw]))
+        # print(x, y, z, np.degrees([r, p, yaw]))
         # 로봇의 현재 위치
         robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.robot_pos
 
@@ -96,10 +95,12 @@ class ROSNode(Node):
         transformed_points = []
 
         for point in points:
-            # 포인트에 끝점의 위치를 더하고 회전
-            rotated_point = rotation_matrix @ np.array(point)
-            transformed_point = rotated_point + np.array([end_x, end_y, end_z])
-            transformed_points.append(transformed_point)
+            if(point == (0, 0, 0)):
+                transformed_points.append([0.0, 0.0, 0.0])
+            else:    
+                rotated_point = rotation_matrix @ np.array(point)
+                transformed_point = rotated_point + np.array([end_x, end_y, end_z])
+                transformed_points.append(transformed_point)
 
         return transformed_points
 
