@@ -164,6 +164,21 @@ class QtController(QMainWindow):
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
 
+        # x, y, z 축의 범위를 동일하게 설정
+        all_points = np.transpose(self.points)
+        if all_points.size > 0:
+            max_range = np.array([all_points[0].max() - all_points[0].min(),
+                                all_points[1].max() - all_points[1].min(),
+                                all_points[2].max() - all_points[2].min()]).max() / 2.0
+
+            mid_x = (all_points[0].max() + all_points[0].min()) * 0.5
+            mid_y = (all_points[1].max() + all_points[1].min()) * 0.5
+            mid_z = (all_points[2].max() + all_points[2].min()) * 0.5
+
+            ax.set_xlim(mid_x - max_range, mid_x + max_range)
+            ax.set_ylim(mid_y - max_range, mid_y + max_range)
+            ax.set_zlim(mid_z - max_range, mid_z + max_range)
+
         # 업데이트된 플롯을 표시
         self.canvas.draw()
 
