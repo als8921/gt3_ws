@@ -4,9 +4,11 @@ from sklearn.preprocessing import StandardScaler
 
 def cluster_pointcloud(pointcloud):
     temp_points = []
-    for x, y, z in pointcloud:
-        if(x != 0 and y != 0 and z !=0):
+    original_indices = []  # 원래 인덱스를 저장할 리스트 추가
+    for idx, (x, y, z) in enumerate(pointcloud):
+        if(x != 0 and y != 0 and z != 0):
             temp_points.append([x, y, z])
+            original_indices.append(idx)  # 원래 인덱스 추가
 
     data = np.array(temp_points)
     # 데이터 스케일링
@@ -42,13 +44,23 @@ def cluster_pointcloud(pointcloud):
     closest_cluster_data = data[labels == closest_cluster_label]
     remaining_data = data[labels != closest_cluster_label]
 
-    return closest_cluster_data.tolist(), remaining_data.tolist()
+    # closest_cluster_data의 인덱스 찾기 (원래 인덱스 기반)
+    closest_indices = [original_indices[i] for i in np.where(labels == closest_cluster_label)[0].tolist()]
+    
 
-# 예시 사용
-# file_path = 'pcl_visualization/pointcloud_data/pointcloud_data_0.txt'
-# closest, remaining = cluster_pointcloud(np.loadtxt(file_path))
 
-# print("가장 가까운 클러스터 데이터:")
-# print(closest)
-# print("나머지 데이터:")
-# print(remaining)
+    width, height = 43, 24
+    image = np.ones((height, width, 3))
+
+    for index in closest_indices:
+        y = index // width
+        x = index % width
+        if 0 <= y < height and 0 <= x < width:
+            image[y, x] = [0, 0, 0]  # 검은색으로 설정
+
+
+
+
+
+
+    return closest_cluster_data.tolist(), remaining_data.tolist(), image
