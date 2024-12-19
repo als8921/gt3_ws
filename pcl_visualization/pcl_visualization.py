@@ -121,8 +121,18 @@ class QtController(QMainWindow):
                 closest, remaining, image = pcl_clustering.cluster_pointcloud(self.points)
 
         if closest:     
+            print(*closest)
             closest = np.transpose(closest)
-            ax3D.scatter(closest[0], closest[1], closest[2], c='r', marker='o', s=2)
+            ax3D.scatter(closest[0], closest[1], closest[2], c='g', marker='o', s=2)
+            x_min, x_max = closest[0].min(), closest[0].max()
+            y_min, y_max = closest[1].min(), closest[1].max()
+            z_min, z_max = closest[2].min(), closest[2].max()
+
+            # 초록색 박스 그리기
+            ax3D.bar3d(x_min, y_min, z_min, 
+                    x_max - x_min, y_max - y_min, z_max - z_min, 
+                    color='green', alpha=0.2)
+
 
         if remaining:     
             remaining = np.transpose(remaining)
