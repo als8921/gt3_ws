@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -155,6 +155,9 @@
       <pointsize>20</pointsize>
      </font>
     </property>
+    <property name="inputMask">
+     <string/>
+    </property>
    </widget>
    <widget class="QLineEdit" name="lineEdit1">
     <property name="geometry">
@@ -170,6 +173,12 @@
       <pointsize>20</pointsize>
      </font>
     </property>
+    <property name="inputMask">
+     <string/>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
    </widget>
    <widget class="QLineEdit" name="lineEdit2">
     <property name="geometry">
@@ -184,6 +193,12 @@
      <font>
       <pointsize>20</pointsize>
      </font>
+    </property>
+    <property name="inputMask">
+     <string/>
+    </property>
+    <property name="text">
+     <string/>
     </property>
    </widget>
    <widget class="QPushButton" name="rotateButton">

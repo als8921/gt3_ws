@@ -51,9 +51,9 @@ class QtController(QMainWindow):
 
     def init_ui(self):
         uic.loadUi('pcl.ui', self)
-        self.lineEdit0.setText('Roll')
-        self.lineEdit1.setText('Pitch')
-        self.lineEdit2.setText('Yaw')
+        self.lineEdit0.setText('0.0')
+        self.lineEdit1.setText('0.0')
+        self.lineEdit2.setText('0.0')
 
         self.loadButton.clicked.connect(self.get_pointcloud)
         self.loadTxtButton.clicked.connect(self.load_pointcloud_file)
