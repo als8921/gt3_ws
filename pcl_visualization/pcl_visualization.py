@@ -142,6 +142,7 @@ class QtController(QMainWindow):
             # 이미지를 2D 플롯에 표시
             ax2D.imshow(image, cmap='gray')  # 필요한 경우 cmap을 변경하세요.
             ax2D.axis([0, 43, 0, 23])
+            ax2D.invert_yaxis()
 
         # x, y, z 축의 범위를 동일하게 설정
         all_points = np.transpose(self.points)
