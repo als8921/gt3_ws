@@ -144,12 +144,13 @@ class QtController(QMainWindow):
         ax = self.figure.add_subplot(111, projection='3d')
         closest = []
         remaining = []
+        image = np.array([])
         if rotate:
             if self.rotated_points:
-                closest, remaining = pcl_clustering.cluster_pointcloud(self.rotated_points)
+                closest, remaining, image = pcl_clustering.cluster_pointcloud(self.rotated_points)
         else:
             if self.points:
-                closest, remaining = pcl_clustering.cluster_pointcloud(self.points)
+                closest, remaining, image = pcl_clustering.cluster_pointcloud(self.points)
 
         if closest:     
             closest = np.transpose(closest)
@@ -176,37 +177,6 @@ class QtController(QMainWindow):
             self.plot_points(rotate=True)  # 회전 후 점 다시 플로팅
         except ValueError:
             print("유효한 숫자를 입력하세요.")
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_S:  # X 축 + 방향 이동
-            self.x_offset += 1
-        elif event.key() == Qt.Key_W:  # X 축 - 방향 이동
-            self.x_offset -= 1
-        elif event.key() == Qt.Key_D:  # Y 축 + 방향 이동
-            self.y_offset += 1
-        elif event.key() == Qt.Key_A:  # Y 축 - 방향 이동
-            self.y_offset -= 1
-        elif event.key() == Qt.Key_E:  # Z 축 + 방향 이동
-            self.z_offset += 1
-        elif event.key() == Qt.Key_Q:  # Z 축 - 방향 이동
-            self.z_offset -= 1
-        elif event.key() == Qt.Key_Minus:  # 축소
-            self.current_range += 1
-        elif event.key() == Qt.Key_Plus or event.key() == Qt.Key_Equal:  # 확대
-            self.current_range = max(1, self.current_range - 1)
-
-        # 업데이트된 축 범위 적용
-        self.update_axis_range()
-
-    def update_axis_range(self):
-        # 현재 축 범위를 계산하고 업데이트
-        ax = self.figure.axes[0]
-        ax.set_xlim(-self.current_range + self.x_offset, self.current_range + self.x_offset)
-        ax.set_ylim(-self.current_range + self.y_offset, self.current_range + self.y_offset)
-        ax.set_zlim(-self.current_range + self.z_offset, self.current_range + self.z_offset)
-
-        # 업데이트된 플롯을 표시
-        self.canvas.draw()
 
     def run_ros_node(self):
         rclpy.init()
