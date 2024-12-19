@@ -121,7 +121,6 @@ class QtController(QMainWindow):
                 closest, remaining, image = pcl_clustering.cluster_pointcloud(self.points)
 
         if closest:     
-            print(*closest)
             closest = np.transpose(closest)
             ax3D.scatter(closest[0], closest[1], closest[2], c='g', marker='o', s=2)
             x_min, x_max = closest[0].min(), closest[0].max()
