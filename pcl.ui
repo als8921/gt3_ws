@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1920</width>
+    <height>1080</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,13 +18,13 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>20</y>
-      <width>500</width>
-      <height>500</height>
+      <y>10</y>
+      <width>1000</width>
+      <height>1000</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -34,9 +34,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
-        <width>500</width>
-        <height>500</height>
+        <y>-30</y>
+        <width>1000</width>
+        <height>1000</height>
        </rect>
       </property>
       <property name="frameShape">
@@ -54,10 +54,10 @@
      <widget class="QFrame" name="frame_2">
       <property name="geometry">
        <rect>
-        <x>30</x>
-        <y>120</y>
-        <width>430</width>
-        <height>240</height>
+        <x>60</x>
+        <y>50</y>
+        <width>860</width>
+        <height>480</height>
        </rect>
       </property>
       <property name="frameShape">
@@ -72,11 +72,16 @@
    <widget class="QPushButton" name="loadButton">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>70</y>
-      <width>151</width>
-      <height>31</height>
+      <x>1140</x>
+      <y>40</y>
+      <width>551</width>
+      <height>91</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>PCL 불러오기(ROS)</string>
@@ -85,11 +90,16 @@
    <widget class="QPushButton" name="loadTxtButton">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>120</y>
-      <width>151</width>
-      <height>31</height>
+      <x>1140</x>
+      <y>140</y>
+      <width>551</width>
+      <height>91</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>PCL 불러오기(.txt)</string>
@@ -98,24 +108,34 @@
    <widget class="QPushButton" name="saveButton">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>170</y>
-      <width>151</width>
-      <height>31</height>
+      <x>1140</x>
+      <y>240</y>
+      <width>391</width>
+      <height>81</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
+    </property>
     <property name="text">
-     <string>저장</string>
+     <string>PCL 저장</string>
     </property>
    </widget>
    <widget class="QPushButton" name="resetButton">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>220</y>
+      <x>1540</x>
+      <y>240</y>
       <width>151</width>
-      <height>31</height>
+      <height>81</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>초기화</string>
@@ -124,41 +144,61 @@
    <widget class="QLineEdit" name="lineEdit0">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>270</y>
-      <width>71</width>
-      <height>25</height>
+      <x>1420</x>
+      <y>330</y>
+      <width>161</width>
+      <height>51</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
    </widget>
    <widget class="QLineEdit" name="lineEdit1">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>310</y>
-      <width>71</width>
-      <height>25</height>
+      <x>1420</x>
+      <y>390</y>
+      <width>161</width>
+      <height>51</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
    </widget>
    <widget class="QLineEdit" name="lineEdit2">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>350</y>
-      <width>71</width>
-      <height>25</height>
+      <x>1420</x>
+      <y>450</y>
+      <width>161</width>
+      <height>51</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
    </widget>
    <widget class="QPushButton" name="rotateButton">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>270</y>
-      <width>51</width>
-      <height>101</height>
+      <x>1590</x>
+      <y>330</y>
+      <width>101</width>
+      <height>171</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>회전</string>
@@ -167,11 +207,16 @@
    <widget class="QPushButton" name="quitButton">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>390</y>
-      <width>151</width>
-      <height>41</height>
+      <x>1580</x>
+      <y>900</y>
+      <width>301</width>
+      <height>101</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>종료</string>
@@ -183,7 +228,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1920</width>
      <height>22</height>
     </rect>
    </property>
