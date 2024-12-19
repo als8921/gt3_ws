@@ -112,14 +112,15 @@ class QtController(QMainWindow):
         closest = []
         remaining = []
         image = np.array([])
+        cluster_idx = []
         
         if rotate:
             if self.rotated_points:
-                closest, remaining, image = pcl_clustering.cluster_pointcloud(self.rotated_points)
+                closest, remaining, image, cluster_idx = pcl_clustering.cluster_pointcloud(self.rotated_points)
         else:
             if self.points:
-                closest, remaining, image = pcl_clustering.cluster_pointcloud(self.points)
-
+                closest, remaining, image, cluster_idx = pcl_clustering.cluster_pointcloud(self.points)
+        print(cluster_idx)
         if closest:     
             closest = np.transpose(closest)
             ax3D.scatter(closest[0], closest[1], closest[2], c='g', marker='o', s=2)

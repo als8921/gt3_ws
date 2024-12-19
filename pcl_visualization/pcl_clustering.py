@@ -63,4 +63,4 @@ def cluster_pointcloud(pointcloud):
 
 
 
-    return closest_cluster_data.tolist(), remaining_data.tolist(), image
+    return closest_cluster_data.tolist(), remaining_data.tolist(), image, closest_indices
