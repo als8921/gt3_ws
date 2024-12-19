@@ -38,14 +38,14 @@ class QtController(QMainWindow):
         # Matplotlib Figure 및 Canvas 설정
         self.figure3D = plt.figure()
         self.canvas3D = FigureCanvas(self.figure3D)
-        self.layout3D = QVBoxLayout(self.frame)  # 'frame'은 .ui 파일에서 정의된 Frame의 객체 이름
-        self.layout3D.addWidget(self.canvas3D)  # Canvas를 Frame에 추가
+        self.layout3D = QVBoxLayout(self.frame)
+        self.layout3D.addWidget(self.canvas3D)
 
         # 2D 플롯의 Figure 및 Canvas 초기화
-        self.figure2D = plt.figure()  # 추가된 초기화
+        self.figure2D = plt.figure()
         self.canvas2D = FigureCanvas(self.figure2D)
-        self.layout2D = QVBoxLayout(self.frame_2)  # 'frame_2'은 .ui 파일에서 정의된 Frame의 객체 이름
-        self.layout2D.addWidget(self.canvas2D)  # Canvas를 Frame에 추가
+        self.layout2D = QVBoxLayout(self.frame_2)
+        self.layout2D.addWidget(self.canvas2D)
 
         self.plot_points()
 
