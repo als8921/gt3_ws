@@ -8,8 +8,10 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mpl_toolkits.mplot3d import Axes3D
 from ros_node import ROSNode
 import rclpy
-from PyQt5.QtCore import Qt
+from PyQt5 import uic, QtCore
 import pcl_clustering  
+QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
 class QtController(QMainWindow):
     def __init__(self):
@@ -34,8 +36,9 @@ class QtController(QMainWindow):
         self.z_offset = 0
 
     def init_ui(self):
-        self.setWindowTitle("ROS Control Panel")
-        self.setGeometry(100, 100, 3000, 1800)
+        uic.loadUi('viewer.ui', self)
+        # self.setWindowTitle("ROS Control Panel")
+        # self.setGeometry(100, 100, 3000, 1800)
 
         # 중앙 위젯과 레이아웃 설정
         central_widget = QWidget(self)
