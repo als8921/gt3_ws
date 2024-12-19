@@ -37,22 +37,17 @@ class QtController(QMainWindow):
 
         # Matplotlib Figure 및 Canvas 설정
         self.figure3D = plt.figure()
-        self.figure3D.add_subplot(111, projection='3d')
         self.canvas3D = FigureCanvas(self.figure3D)
-        self.plot_points()
+        self.layout3D = QVBoxLayout(self.frame)  # 'frame'은 .ui 파일에서 정의된 Frame의 객체 이름
+        self.layout3D.addWidget(self.canvas3D)  # Canvas를 Frame에 추가
 
-        # Frame에 Matplotlib Canvas 추가
-        self.layout = QVBoxLayout(self.frame)  # 'frame'은 .ui 파일에서 정의된 Frame의 객체 이름
-        self.layout.addWidget(self.canvas3D)  # Canvas를 Frame에 추가
-
-
-        self.figure2D = plt.figure()
-        self.figure2D.add_subplot(111)
+        # 2D 플롯의 Figure 및 Canvas 초기화
+        self.figure2D = plt.figure()  # 추가된 초기화
         self.canvas2D = FigureCanvas(self.figure2D)
-        # Frame에 Matplotlib Canvas 추가
-        self.layout = QVBoxLayout(self.frame_2)  # 'frame'은 .ui 파일에서 정의된 Frame의 객체 이름
-        self.layout.addWidget(self.canvas2D)  # Canvas를 Frame에 추가
+        self.layout2D = QVBoxLayout(self.frame_2)  # 'frame_2'은 .ui 파일에서 정의된 Frame의 객체 이름
+        self.layout2D.addWidget(self.canvas2D)  # Canvas를 Frame에 추가
 
+        self.plot_points()
 
     def init_ui(self):
         uic.loadUi('pcl.ui', self)
@@ -109,14 +104,15 @@ class QtController(QMainWindow):
         self.z_offset = 0
         self.current_range = self.default_range  # 스케일 초기화
         self.plot_points()
-
     def plot_points(self, rotate=False):
-        # 기존 플롯 초기화
+        # 3D 플롯 초기화
         self.figure3D.clear()
-        ax = self.figure3D.add_subplot(111, projection='3d')
+        ax3D = self.figure3D.add_subplot(111, projection='3d')
+        
         closest = []
         remaining = []
         image = np.array([])
+        
         if rotate:
             if self.rotated_points:
                 closest, remaining, image = pcl_clustering.cluster_pointcloud(self.rotated_points)
@@ -126,18 +122,30 @@ class QtController(QMainWindow):
 
         if closest:     
             closest = np.transpose(closest)
-            ax.scatter(closest[0], closest[1], closest[2], c='r', marker='o')
+            ax3D.scatter(closest[0], closest[1], closest[2], c='r', marker='o', s=2)
 
         if remaining:     
             remaining = np.transpose(remaining)
-            ax.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o')
+            ax3D.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o', s=2)
 
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+        ax3D.set_xlabel('X')
+        ax3D.set_ylabel('Y')
+        ax3D.set_zlabel('Z')
+
+        # 2D 플롯 초기화
+        self.figure2D.clear()
+        ax2D = self.figure2D.add_subplot(111)
+        ax2D.axis([0, 43, 0, 23])
+        ax2D.invert_yaxis()
+        
+        if image.size > 0:
+            # 이미지를 2D 플롯에 표시
+            ax2D.imshow(image, cmap='gray')  # 필요한 경우 cmap을 변경하세요.
+            ax2D.axis([0, 43, 0, 23])
 
         # 업데이트된 플롯을 표시
         self.canvas3D.draw()
+        self.canvas2D.draw()
 
     def apply_rotation(self):
         # Roll, Pitch, Yaw 값을 가져와서 회전 적용
