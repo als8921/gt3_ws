@@ -4,6 +4,17 @@ clustered_idx = [546, 548, 549, 550, 564, 565, 566, 567, 568, 569, 575, 576, 577
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import open3d as o3d
+
+
+points = np.array(clustered_data)
+pcd = o3d.geometry.PointCloud()
+pcd.points = o3d.utility.Vector3dVector(points)
+
+# 노멀 벡터 계산
+pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+# 노멀 벡터 가져오기
+normals = np.asarray(pcd.normals)
 
 # 데이터 분리
 x, y, z = np.transpose(clustered_data)
@@ -11,7 +22,11 @@ x, y, z = np.transpose(clustered_data)
 # 3D 시각화
 fig = plt.figure(figsize=(16, 16))
 ax = fig.add_subplot(111, projection='3d')
-ax.scatter(x, y, z, c='b', marker='o')  
+ax.scatter(x, y, z, color=[0, 0.5, 0.6], marker='o')  
+
+for i in range(len(points)):
+    ax.quiver(x[i], y[i], z[i], normals[i, 0], normals[i, 1], normals[i, 2], length=0.1, color=[0, 1, 0, 0.4], arrow_length_ratio=0.1)
+
 
 # 축 레이블
 ax.set_xlabel('X')
