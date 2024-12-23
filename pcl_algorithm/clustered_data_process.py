@@ -19,32 +19,53 @@ normals = np.asarray(pcd.normals)
 # 데이터 분리
 x, y, z = np.transpose(clustered_data)
 
-# 3D 시각화
-fig = plt.figure(figsize=(16, 16))
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(x, y, z, color=[0, 0.5, 0.6], marker='o')  
+def plot3D():
+    # 3D 시각화
+    fig = plt.figure(figsize=(16, 16))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x, y, z, color=[0, 0.5, 0.6], marker='o')  
 
-for i in range(len(points)):
-    ax.quiver(x[i], y[i], z[i], normals[i, 0], normals[i, 1], normals[i, 2], length=0.1, color=[0, 1, 0, 0.4], arrow_length_ratio=0.1)
+    for i in range(len(points)):
+        ax.quiver(x[i], y[i], z[i], normals[i, 0], normals[i, 1], normals[i, 2], length=0.1, color=[0, 1, 0, 0.4], arrow_length_ratio=0.1)
 
 
-# 축 레이블
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+    # 축 레이블
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
 
-# 축 스케일을 동일하게 설정
-max_range = np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() / 2.0
+    # 축 스케일을 동일하게 설정
+    max_range = np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() / 2.0
 
-# 중심점 설정
-mid_x = (x.max()+x.min()) * 0.5
-mid_y = (y.max()+y.min()) * 0.5
-mid_z = (z.max()+z.min()) * 0.5
+    # 중심점 설정
+    mid_x = (x.max()+x.min()) * 0.5
+    mid_y = (y.max()+y.min()) * 0.5
+    mid_z = (z.max()+z.min()) * 0.5
 
-# 축 범위 설정
-ax.set_xlim(mid_x - max_range, mid_x + max_range)
-ax.set_ylim(mid_y - max_range, mid_y + max_range)
-ax.set_zlim(mid_z - max_range, mid_z + max_range)
+    # 축 범위 설정
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
+
+
+def plot2D():
+    width, height = 43, 24
+    image = np.ones((height, width, 3))
+
+    for index in clustered_idx:
+        y = index // width
+        x = index % width
+        if 0 <= y < height and 0 <= x < width:
+            image[y, x] = [0, 0, 0]
+
+    fig = plt.figure(figsize=(16, 16))
+    ax2D = fig.add_subplot(111)
+    ax2D.imshow(image)
+    ax2D.axis([0, 43, 0, 23])
+    ax2D.invert_yaxis()
+
+
+plot3D()
 # 그래프 보여주기
 plt.show()
