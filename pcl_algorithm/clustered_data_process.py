@@ -36,44 +36,41 @@ def plot3D():
             new_z = z[i] + normals[i, 2] * radius
             center_points.append([new_x, new_y, new_z])
 
-
     # z값이 높은 포인트와 나머지 포인트를 다른 색으로 시각화
-    ax.scatter(x[mask], y[mask], z[mask], color='red', marker='o', label='High Z Points')  # z값이 높은 포인트
-    ax.scatter(x[~mask], y[~mask], z[~mask], color=[0, 0.5, 0.6], marker='o', label='Other Points')  # 나머지 포인트
+    ax.scatter(x[mask], y[mask], z[mask], color='red', marker='o', label='High Z Points')
+    ax.scatter(x[~mask], y[~mask], z[~mask], color=[0, 0.5, 0.6], marker='o', label='Other Points')
 
-    # center_points가 비어 있지 않은 경우 PCA를 사용하여 직선 찾기
     if center_points:
         center_points = np.array(center_points)
         
-        pca = PCA(n_components=1) # PCA를 적용하여 최적의 직선 찾기
+        pca = PCA(n_components=1)
         pca.fit(center_points)
-        line_direction = pca.components_[0] # PCA에서 얻은 주성분 벡터
+        line_direction = pca.components_[0]
 
         mean_point = center_points.mean(axis=0)
         t = np.linspace(-1, 1, 20)
         line_points = mean_point + (line_direction * t[:, np.newaxis] * np.linalg.norm(center_points - mean_point, axis=1).max())
 
-        # 직선 그리기
+        # 직선의 양 끝점
+        start_point = line_points[0]
+        end_point = line_points[-1]
+        print("직선의 시작점:", start_point)
+        print("직선의 끝점:", end_point)
 
-        # 원통 시각화: 원통의 원 그리기
         num_circle_points = 100
         circle_radius = 0.15
         theta = np.linspace(0, 2 * np.pi, num_circle_points)
 
         for point in line_points:
-            # 직선 방향 벡터를 기준으로 수직 벡터 계산
             if np.all(line_direction == 0):
-                vertical_vector = np.array([0, 0, 1])  # 기본 방향을 Z축으로 설정
+                vertical_vector = np.array([0, 0, 1])
             else:
-                # 직선 방향 벡터와 수직인 벡터 계산
                 vertical_vector = np.cross(line_direction, np.array([1, 0, 0]))
-                if np.linalg.norm(vertical_vector) < 1e-6:  # 수직 벡터가 0일 경우
+                if np.linalg.norm(vertical_vector) < 1e-6:
                     vertical_vector = np.cross(line_direction, np.array([0, 1, 0]))
 
-            # 수직 벡터 정규화
             vertical_vector /= np.linalg.norm(vertical_vector)
 
-            # 원의 점 계산
             x_circle = point[0] + circle_radius * (np.cos(theta) * vertical_vector[0] + np.sin(theta) * np.cross(line_direction, vertical_vector)[0])
             y_circle = point[1] + circle_radius * (np.cos(theta) * vertical_vector[1] + np.sin(theta) * np.cross(line_direction, vertical_vector)[1])
             z_circle = point[2] + circle_radius * (np.cos(theta) * vertical_vector[2] + np.sin(theta) * np.cross(line_direction, vertical_vector)[2])
@@ -81,31 +78,26 @@ def plot3D():
             ax.plot(x_circle, y_circle, z_circle, color='gray', alpha=0.5)
 
         ax.plot(line_points[:, 0], line_points[:, 1], line_points[:, 2], color='blue', linewidth=2)
-        ax.scatter(center_points.transpose()[0],center_points.transpose()[1], center_points.transpose()[2], color=[0, 0, 1, 0.5], marker='o', s = 10)
+        ax.scatter(center_points.transpose()[0], center_points.transpose()[1], center_points.transpose()[2], color=[0, 0, 1, 0.5], marker='o', s=10)
 
-
-    # 축 레이블
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
 
-    # 축 스케일을 동일하게 설정
     max_range = np.array([x.max() - x.min(), y.max() - y.min(), z.max() - z.min()]).max() / 2.0
 
-    # 중심점 설정
     mid_x = (x.max() + x.min()) * 0.5
     mid_y = (y.max() + y.min()) * 0.5
     mid_z = (z.max() + z.min()) * 0.5
 
-    # 축 범위 설정
     ax.set_xlim(mid_x - max_range, mid_x + max_range)
     ax.set_ylim(mid_y - max_range, mid_y + max_range)
     ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
-    # 범례 추가
     ax.legend()
     
     plt.show()
+
 
 
 def plot2D():
