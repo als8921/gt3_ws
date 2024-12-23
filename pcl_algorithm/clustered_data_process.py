@@ -48,16 +48,10 @@ def plot3D():
         line_direction = pca.components_[0]
 
         mean_point = center_points.mean(axis=0)
-        t = np.linspace(-1, 1, 20)
+        t = np.linspace(-1, 1, 10)
         line_points = mean_point + (line_direction * t[:, np.newaxis] * np.linalg.norm(center_points - mean_point, axis=1).max())
 
-        # 직선의 양 끝점
-        start_point = line_points[0]
-        end_point = line_points[-1]
-        print("직선의 시작점:", start_point)
-        print("직선의 끝점:", end_point)
-
-        num_circle_points = 100
+        num_circle_points = 30
         circle_radius = 0.15
         theta = np.linspace(0, 2 * np.pi, num_circle_points)
 
@@ -76,6 +70,12 @@ def plot3D():
             z_circle = point[2] + circle_radius * (np.cos(theta) * vertical_vector[2] + np.sin(theta) * np.cross(line_direction, vertical_vector)[2])
 
             ax.plot(x_circle, y_circle, z_circle, color='gray', alpha=0.5)
+
+            # 중앙 점으로 향하는 화살표 추가
+            arrow_length = 0.1  # 화살표 길이
+            ax.quiver(x_circle, y_circle, z_circle, 
+                    (point[0] - x_circle), (point[1] - y_circle), (point[2] - z_circle), 
+                    length=arrow_length, color=[0, 0, 0, 0.3], arrow_length_ratio=0.5)
 
         ax.plot(line_points[:, 0], line_points[:, 1], line_points[:, 2], color='blue', linewidth=2)
         ax.scatter(center_points.transpose()[0], center_points.transpose()[1], center_points.transpose()[2], color=[0, 0, 1, 0.5], marker='o', s=10)
@@ -97,7 +97,6 @@ def plot3D():
     ax.legend()
     
     plt.show()
-
 
 
 def plot2D():
