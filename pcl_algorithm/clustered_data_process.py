@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import open3d as o3d
+from sklearn.decomposition import PCA
 
 
 points = np.array(clustered_data)
@@ -21,13 +22,48 @@ x, y, z = np.transpose(clustered_data)
 
 def plot3D():
     # 3D 시각화
+    radius = 0.15
     fig = plt.figure(figsize=(16, 16))
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(x, y, z, color=[0, 0.5, 0.6], marker='o')  
+
+    # z값이 가장 높은 데이터 포인트 찾기
+    max_z = z.max()
+    mask = (z >= max_z - 0.3)
+
+    # z값이 높은 포인트와 나머지 포인트를 다른 색으로 시각화
+    ax.scatter(x[mask], y[mask], z[mask], color='red', marker='o', label='High Z Points')  # z값이 높은 포인트
+    ax.scatter(x[~mask], y[~mask], z[~mask], color=[0, 0.5, 0.6], marker='o', label='Other Points')  # 나머지 포인트
+
+    # mask된 데이터에서 normal 방향으로 radius 만큼 이동한 위치 시각화
+    offset_points = []
 
     for i in range(len(points)):
-        ax.quiver(x[i], y[i], z[i], normals[i, 0], normals[i, 1], normals[i, 2], length=0.1, color=[0, 1, 0, 0.4], arrow_length_ratio=0.1)
+        if mask[i]:  # mask가 True인 경우에만 처리
+            new_x = x[i] + normals[i, 0] * radius
+            new_y = y[i] + normals[i, 1] * radius
+            new_z = z[i] + normals[i, 2] * radius
+            offset_points.append([new_x, new_y, new_z])
 
+    # offset_points가 비어 있지 않은 경우 PCA를 사용하여 직선 찾기
+    if offset_points:
+        offset_points = np.array(offset_points)
+        
+        # PCA를 적용하여 주성분을 찾음
+        pca = PCA(n_components=1)
+        pca.fit(offset_points)
+        
+        # PCA에서 얻은 주성분 벡터
+        line_direction = pca.components_[0]
+        
+        # 주어진 점의 평균을 구하여 직선의 시작점 설정
+        mean_point = offset_points.mean(axis=0)
+
+        # 직선의 끝점 생성 (주성분 방향으로 일정 거리만큼 이동)
+        t = np.linspace(-1, 1, 100)
+        line_points = mean_point + (line_direction * t[:, np.newaxis] * np.linalg.norm(offset_points - mean_point, axis=1).max())
+
+        # 직선 그리기
+        ax.plot(line_points[:, 0], line_points[:, 1], line_points[:, 2], color='blue', linewidth=2, label='Best Fit Line')
 
     # 축 레이블
     ax.set_xlabel('X')
@@ -38,14 +74,19 @@ def plot3D():
     max_range = np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() / 2.0
 
     # 중심점 설정
-    mid_x = (x.max()+x.min()) * 0.5
-    mid_y = (y.max()+y.min()) * 0.5
-    mid_z = (z.max()+z.min()) * 0.5
+    mid_x = (x.max() + x.min()) * 0.5
+    mid_y = (y.max() + y.min()) * 0.5
+    mid_z = (z.max() + z.min()) * 0.5
 
     # 축 범위 설정
     ax.set_xlim(mid_x - max_range, mid_x + max_range)
     ax.set_ylim(mid_y - max_range, mid_y + max_range)
     ax.set_zlim(mid_z - max_range, mid_z + max_range)
+
+    # 범례 추가
+    ax.legend()
+    
+    plt.show()
 
 
 
@@ -64,8 +105,7 @@ def plot2D():
     ax2D.imshow(image)
     ax2D.axis([0, 43, 0, 23])
     ax2D.invert_yaxis()
+    plt.show()
 
 
 plot3D()
-# 그래프 보여주기
-plt.show()
