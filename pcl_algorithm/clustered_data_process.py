@@ -47,14 +47,14 @@ def plot3D():
     # offset_points가 비어 있지 않은 경우 PCA를 사용하여 직선 찾기
     if offset_points:
         offset_points = np.array(offset_points)
-        
+
         # PCA를 적용하여 주성분을 찾음
         pca = PCA(n_components=1)
         pca.fit(offset_points)
-        
+
         # PCA에서 얻은 주성분 벡터
         line_direction = pca.components_[0]
-        
+
         # 주어진 점의 평균을 구하여 직선의 시작점 설정
         mean_point = offset_points.mean(axis=0)
 
@@ -65,13 +65,38 @@ def plot3D():
         # 직선 그리기
         ax.plot(line_points[:, 0], line_points[:, 1], line_points[:, 2], color='blue', linewidth=2, label='Best Fit Line')
 
+        # 원통 시각화: 원통의 원 그리기
+        num_circle_points = 100
+        theta = np.linspace(0, 2 * np.pi, num_circle_points)
+
+        for point in line_points:
+            # 직선 방향 벡터를 기준으로 수직 벡터 계산
+            if np.all(line_direction == 0):
+                vertical_vector = np.array([0, 0, 1])  # 기본 방향을 Z축으로 설정
+            else:
+                # 직선 방향 벡터와 수직인 벡터 계산
+                vertical_vector = np.cross(line_direction, np.array([1, 0, 0]))
+                if np.linalg.norm(vertical_vector) < 1e-6:  # 수직 벡터가 0일 경우
+                    vertical_vector = np.cross(line_direction, np.array([0, 1, 0]))
+
+            # 수직 벡터 정규화
+            vertical_vector /= np.linalg.norm(vertical_vector)
+
+            # 원의 점 계산
+            x_circle = point[0] + radius * (np.cos(theta) * vertical_vector[0] + np.sin(theta) * np.cross(line_direction, vertical_vector)[0])
+            y_circle = point[1] + radius * (np.cos(theta) * vertical_vector[1] + np.sin(theta) * np.cross(line_direction, vertical_vector)[1])
+            z_circle = point[2] + radius * (np.cos(theta) * vertical_vector[2] + np.sin(theta) * np.cross(line_direction, vertical_vector)[2])  # z좌표는 직선의 z좌표에 반경을 더함
+
+            # 원통의 경계를 그리기
+            ax.plot(x_circle, y_circle, z_circle, color='gray', alpha=0.5)
+
     # 축 레이블
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
 
     # 축 스케일을 동일하게 설정
-    max_range = np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() / 2.0
+    max_range = np.array([x.max() - x.min(), y.max() - y.min(), z.max() - z.min()]).max() / 2.0
 
     # 중심점 설정
     mid_x = (x.max() + x.min()) * 0.5
@@ -87,7 +112,6 @@ def plot3D():
     ax.legend()
     
     plt.show()
-
 
 
 def plot2D():
