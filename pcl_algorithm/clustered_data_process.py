@@ -21,52 +21,43 @@ normals = np.asarray(pcd.normals)
 x, y, z = np.transpose(clustered_data)
 
 def plot3D():
-    # 3D 시각화
     radius = 0.15
     fig = plt.figure(figsize=(16, 16))
     ax = fig.add_subplot(111, projection='3d')
 
-    # z값이 가장 높은 데이터 포인트 찾기
     max_z = z.max()
-    mask = (z >= max_z - 0.3)
-
-    # z값이 높은 포인트와 나머지 포인트를 다른 색으로 시각화
-    ax.scatter(x[mask], y[mask], z[mask], color='red', marker='o', label='High Z Points')  # z값이 높은 포인트
-    ax.scatter(x[~mask], y[~mask], z[~mask], color=[0, 0.5, 0.6], marker='o', label='Other Points')  # 나머지 포인트
-
-    # mask된 데이터에서 normal 방향으로 radius 만큼 이동한 위치 시각화
-    offset_points = []
-
+    mask = (z >= max_z - radius * 2)
+    
+    center_points = []
     for i in range(len(points)):
         if mask[i]:  # mask가 True인 경우에만 처리
             new_x = x[i] + normals[i, 0] * radius
             new_y = y[i] + normals[i, 1] * radius
             new_z = z[i] + normals[i, 2] * radius
-            offset_points.append([new_x, new_y, new_z])
+            center_points.append([new_x, new_y, new_z])
 
-    # offset_points가 비어 있지 않은 경우 PCA를 사용하여 직선 찾기
-    if offset_points:
-        offset_points = np.array(offset_points)
 
-        # PCA를 적용하여 주성분을 찾음
-        pca = PCA(n_components=1)
-        pca.fit(offset_points)
+    # z값이 높은 포인트와 나머지 포인트를 다른 색으로 시각화
+    ax.scatter(x[mask], y[mask], z[mask], color='red', marker='o', label='High Z Points')  # z값이 높은 포인트
+    ax.scatter(x[~mask], y[~mask], z[~mask], color=[0, 0.5, 0.6], marker='o', label='Other Points')  # 나머지 포인트
 
-        # PCA에서 얻은 주성분 벡터
-        line_direction = pca.components_[0]
+    # center_points가 비어 있지 않은 경우 PCA를 사용하여 직선 찾기
+    if center_points:
+        center_points = np.array(center_points)
+        
+        pca = PCA(n_components=1) # PCA를 적용하여 최적의 직선 찾기
+        pca.fit(center_points)
+        line_direction = pca.components_[0] # PCA에서 얻은 주성분 벡터
 
-        # 주어진 점의 평균을 구하여 직선의 시작점 설정
-        mean_point = offset_points.mean(axis=0)
-
-        # 직선의 끝점 생성 (주성분 방향으로 일정 거리만큼 이동)
-        t = np.linspace(-1, 1, 100)
-        line_points = mean_point + (line_direction * t[:, np.newaxis] * np.linalg.norm(offset_points - mean_point, axis=1).max())
+        mean_point = center_points.mean(axis=0)
+        t = np.linspace(-1, 1, 20)
+        line_points = mean_point + (line_direction * t[:, np.newaxis] * np.linalg.norm(center_points - mean_point, axis=1).max())
 
         # 직선 그리기
-        ax.plot(line_points[:, 0], line_points[:, 1], line_points[:, 2], color='blue', linewidth=2, label='Best Fit Line')
 
         # 원통 시각화: 원통의 원 그리기
         num_circle_points = 100
+        circle_radius = 0.15
         theta = np.linspace(0, 2 * np.pi, num_circle_points)
 
         for point in line_points:
@@ -83,12 +74,15 @@ def plot3D():
             vertical_vector /= np.linalg.norm(vertical_vector)
 
             # 원의 점 계산
-            x_circle = point[0] + radius * (np.cos(theta) * vertical_vector[0] + np.sin(theta) * np.cross(line_direction, vertical_vector)[0])
-            y_circle = point[1] + radius * (np.cos(theta) * vertical_vector[1] + np.sin(theta) * np.cross(line_direction, vertical_vector)[1])
-            z_circle = point[2] + radius * (np.cos(theta) * vertical_vector[2] + np.sin(theta) * np.cross(line_direction, vertical_vector)[2])  # z좌표는 직선의 z좌표에 반경을 더함
+            x_circle = point[0] + circle_radius * (np.cos(theta) * vertical_vector[0] + np.sin(theta) * np.cross(line_direction, vertical_vector)[0])
+            y_circle = point[1] + circle_radius * (np.cos(theta) * vertical_vector[1] + np.sin(theta) * np.cross(line_direction, vertical_vector)[1])
+            z_circle = point[2] + circle_radius * (np.cos(theta) * vertical_vector[2] + np.sin(theta) * np.cross(line_direction, vertical_vector)[2])
 
-            # 원통의 경계를 그리기
             ax.plot(x_circle, y_circle, z_circle, color='gray', alpha=0.5)
+
+        ax.plot(line_points[:, 0], line_points[:, 1], line_points[:, 2], color='blue', linewidth=2)
+        ax.scatter(center_points.transpose()[0],center_points.transpose()[1], center_points.transpose()[2], color=[0, 0, 1, 0.5], marker='o', s = 10)
+
 
     # 축 레이블
     ax.set_xlabel('X')
