@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
-def cluster_pointcloud(pointcloud):
+def cluster_pointcloud(pointcloud, _eps):
     temp_points = []
     original_indices = []  # 원래 인덱스를 저장할 리스트 추가
     for idx, (x, y, z) in enumerate(pointcloud):
@@ -16,7 +16,7 @@ def cluster_pointcloud(pointcloud):
     data_scaled = scaler.fit_transform(data)
 
     # DBSCAN 클러스터링
-    dbscan = DBSCAN(eps=0.2, min_samples=10)  # eps와 min_samples 조정
+    dbscan = DBSCAN(eps=_eps, min_samples=10)  # eps와 min_samples 조정
     labels = dbscan.fit_predict(data_scaled)
 
     # 클러스터 개수 (노이즈는 -1로 레이블링됨)

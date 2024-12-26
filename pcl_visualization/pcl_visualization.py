@@ -54,6 +54,7 @@ class QtController(QMainWindow):
         self.lineEdit0.setText('0.0')
         self.lineEdit1.setText('0.0')
         self.lineEdit2.setText('0.0')
+        self.eps_lineEdit.setText('0.2')
 
         self.loadButton.clicked.connect(self.get_pointcloud)
         self.loadTxtButton.clicked.connect(self.load_pointcloud_file)
@@ -93,7 +94,7 @@ class QtController(QMainWindow):
 
     def get_pointcloud(self):
         self.points.extend(self.ros_node.points)
-        print(len(self.points))
+        print("point 개수 : ", len(self.points))
         self.plot_points()
 
     def reset_plot(self):
@@ -113,14 +114,15 @@ class QtController(QMainWindow):
         remaining = []
         image = np.array([])
         cluster_idx = []
+        clust = np.array([])
         
         if rotate:
             if self.rotated_points:
-                closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.rotated_points)
+                closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.rotated_points, float(self.eps_lineEdit.text()))
         else:
             if self.points:
-                closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.points)
-        print(cluster_idx)
+                closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.points, float(self.eps_lineEdit.text()))
+        print(clust)
         if closest:     
             closest = np.transpose(closest)
             ax3D.scatter(closest[0], closest[1], closest[2], c='g', marker='o', s=2)
