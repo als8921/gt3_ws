@@ -116,10 +116,10 @@ class QtController(QMainWindow):
         
         if rotate:
             if self.rotated_points:
-                closest, remaining, image, cluster_idx = pcl_clustering.cluster_pointcloud(self.rotated_points)
+                closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.rotated_points)
         else:
             if self.points:
-                closest, remaining, image, cluster_idx = pcl_clustering.cluster_pointcloud(self.points)
+                closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.points)
         print(cluster_idx)
         if closest:     
             closest = np.transpose(closest)
