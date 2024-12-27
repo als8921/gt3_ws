@@ -51,28 +51,31 @@ def cluster_pointcloud(pointcloud, _eps):
 
     width, height = 43, 24
     image = np.ones((height, width, 3))
+    clust = np.array([])
 
-    min_x, max_x = width, -1
-    min_y, max_y = height, -1
 
-    for index in closest_indices:
-        y = index // width
-        x = index % width
-        if 0 <= y < height and 0 <= x < width:
-            image[y, x] = [0, 0, 0]  # 검은색으로 설정
-            
+    if(len(pointcloud) <= 1032):
+        min_x, max_x = width, -1
+        min_y, max_y = height, -1
+        for index in closest_indices:
+            y = index // width
+            x = index % width
             min_x = min(min_x, x)
             max_x = max(max_x, x)
             min_y = min(min_y, y)
             max_y = max(max_y, y)
+            image[y][x] = [0, 0, 0]  # 검은색으로 설정
+        
 
 
-    clust = np.full((max_y - min_y + 1, max_x - min_x + 1, 3), np.nan)
+        if(min_x < max_x and min_y < max_y):
+            clust = np.full((max_y - min_y + 3, max_x - min_x + 3, 3), np.nan)
 
-    for index in closest_indices:
-        y = index // width
-        x = index % width
-        clust[y - min_y][x - min_x] = pointcloud[index]
-
+        for index in closest_indices:
+            y = index // width
+            x = index % width
+            clust[y - min_y + 1][x - min_x + 1] = pointcloud[index]
+    else:
+        clust = np.array([])
 
     return closest_cluster_data.tolist(), remaining_data.tolist(), image, closest_indices, clust
