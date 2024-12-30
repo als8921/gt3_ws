@@ -104,5 +104,7 @@ def visualize_normals(data, normals):
     plt.show()
 
 # 메인 실행 부분
-normals = get_normal_vectors(data)
-visualize_normals(data, normals)
+
+if __name__ == '__main__':
+    normals = get_normal_vectors(data)
+    visualize_normals(data, normals)
