@@ -58,6 +58,7 @@ class ROSNode(Node):
             r, p, yaw = tf_transformations.euler_from_quaternion([transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z, transform.transform.rotation.w])
 
         except:
+            print(f"{source_frame} 에서 {target_frame} 까지의 TF를 불러올 수 없음.")
             x, y, z, r, p, yaw = 0, 0, 0, 0, 0, 0
 
         # print(x, y, z, np.degrees([r, p, yaw]))
@@ -122,45 +123,12 @@ class ROSNode(Node):
         # 전체 회전 행렬
         return R_z @ R_y @ R_x
 
-    def rotate_points(self, points, roll, pitch, yaw):
-        # 라디안으로 변환
-        roll = np.radians(roll)
-        pitch = np.radians(pitch)
-        yaw = np.radians(yaw)
-
-        # 회전 행렬 정의
-        R_x = np.array([[1, 0, 0],
-                        [0, np.cos(roll), -np.sin(roll)],
-                        [0, np.sin(roll), np.cos(roll)]])
-
-        R_y = np.array([[np.cos(pitch), 0, np.sin(pitch)],
-                        [0, 1, 0],
-                        [-np.sin(pitch), 0, np.cos(pitch)]])
-
-        R_z = np.array([[np.cos(yaw), -np.sin(yaw), 0],
-                        [np.sin(yaw), np.cos(yaw), 0],
-                        [0, 0, 1]])
-
-        # 전체 회전 행렬
-        R = R_z @ R_y @ R_x
-
-        # 각 점 회전
-        rotated_points = []
-        for point in points:
-            rotated_point = R @ np.array(point)
-            rotated_points.append(rotated_point)
-
-        return rotated_points  # 회전된 점으로 업데이트
-
     def spin(self):
         rclpy.spin(self)
 
-def start_ros_node():
+if __name__ == '__main__':
     rclpy.init()
     node = ROSNode()
     node.spin()
     node.destroy_node()
     rclpy.shutdown()
-
-if __name__ == '__main__':
-    start_ros_node()
