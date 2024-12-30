@@ -25,7 +25,6 @@ class QtController(QMainWindow):
 
         # 초기 점 리스트
         self.points = []
-        self.rotated_points = []
         
         # 축 이동 오프셋 초기화
         self.x_offset = 0
@@ -48,16 +47,12 @@ class QtController(QMainWindow):
 
     def init_ui(self):
         uic.loadUi('pcl.ui', self)
-        self.lineEdit0.setText('0.0')
-        self.lineEdit1.setText('0.0')
-        self.lineEdit2.setText('0.0')
         self.eps_lineEdit.setText('0.2')
 
         self.loadButton.clicked.connect(self.btn_load_pointcloud_ros)
         self.loadTxtButton.clicked.connect(self.btn_load_pointcloud_file)
         self.saveButton.clicked.connect(self.btn_save_pointcloud_file)
         self.resetButton.clicked.connect(self.btn_reset_plot)
-        self.rotateButton.clicked.connect(self.btn_apply_rotation)
         self.quitButton.clicked.connect(self.btn_quit)
 
     def btn_load_pointcloud_ros(self):
@@ -96,17 +91,6 @@ class QtController(QMainWindow):
         self.z_offset = 0
         self.plot_points()
 
-    def btn_apply_rotation(self):
-        # Roll, Pitch, Yaw 값을 가져와서 회전 적용
-        try:
-            roll = float(self.lineEdit0.text())
-            pitch = float(self.lineEdit1.text())
-            yaw = float(self.lineEdit2.text())
-            self.rotated_points = self.ros_node.rotate_points(self.points, roll, pitch, yaw)
-            self.plot_points(rotate=True)  # 회전 후 점 다시 플로팅
-        except ValueError:
-            print("유효한 숫자를 입력하세요.")
-
     def btn_quit(self):
         """애플리케이션 종료를 처리합니다."""
         self.close()
@@ -115,23 +99,19 @@ class QtController(QMainWindow):
 
 
 
-    def plot_points(self, rotate=False):
+    def plot_points(self):
         # 3D 플롯 초기화
         self.figure3D.clear()
         ax3D = self.figure3D.add_subplot(111, projection='3d')
         
         closest = []
         remaining = []
-        image = np.array([])
         cluster_idx = []
+        image = np.array([])
         clust = np.array([])
         
-        if rotate:
-            if self.rotated_points:
-                closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.rotated_points, float(self.eps_lineEdit.text()))
-        else:
-            if self.points:
-                closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.points, float(self.eps_lineEdit.text()))
+        if self.points:
+            closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.points, float(self.eps_lineEdit.text()))
 
         if closest:     
             closest = np.transpose(closest)

@@ -141,89 +141,11 @@
      <string>초기화</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit0">
-    <property name="geometry">
-     <rect>
-      <x>1450</x>
-      <y>190</y>
-      <width>161</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="inputMask">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit1">
-    <property name="geometry">
-     <rect>
-      <x>1450</x>
-      <y>240</y>
-      <width>161</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="inputMask">
-     <string/>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit2">
-    <property name="geometry">
-     <rect>
-      <x>1450</x>
-      <y>290</y>
-      <width>161</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="inputMask">
-     <string/>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="rotateButton">
-    <property name="geometry">
-     <rect>
-      <x>1620</x>
-      <y>190</y>
-      <width>71</width>
-      <height>141</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>회전</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="quitButton">
     <property name="geometry">
      <rect>
       <x>1450</x>
-      <y>340</y>
+      <y>190</y>
       <width>241</width>
       <height>71</height>
      </rect>
