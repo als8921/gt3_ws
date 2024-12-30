@@ -51,8 +51,8 @@ def get_normal_vectors(data):
     rows, cols, _ = data.shape
     normals = np.zeros((rows, cols, 3))
 
-    for y in range(1, rows - 1):  # 경계 점 포함
-        for x in range(1, cols - 1):  # 경계 점 포함
+    for y in range(1, rows - 1):
+        for x in range(1, cols - 1):
             normals[y, x] = get_normal_vector(y, x, data)
 
     return normals
@@ -73,7 +73,7 @@ def visualize_normals(data, normals):
             # 법선 벡터 끝점
             ax.quiver(start[0], start[1], start[2],
                       normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
-                      length=0.1, color='r')
+                      length=0.3, arrow_length_ratio = 0.1, color='r')
 
     # 축 레이블 설정
     ax.set_xlabel('X')
