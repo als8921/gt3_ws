@@ -1,7 +1,4 @@
-from pointcloud_data.cluster_data import data
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 def get_normal_vector(y, x, data):
     """주어진 (y, x) 위치의 법선 벡터를 계산하는 함수."""
     cross_vector = np.zeros(3)
@@ -106,5 +103,9 @@ def visualize_normals(data, normals):
 # 메인 실행 부분
 
 if __name__ == '__main__':
+    from pointcloud_data.cluster_data import data
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
     normals = get_normal_vectors(data)
     visualize_normals(data, normals)
