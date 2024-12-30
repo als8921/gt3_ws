@@ -26,10 +26,6 @@ class QtController(QMainWindow):
         # 초기 점 리스트
         self.points = []
         self.rotated_points = []
-
-        # 기본 축 범위 설정
-        self.default_range = 5
-        self.current_range = self.default_range
         
         # 축 이동 오프셋 초기화
         self.x_offset = 0
@@ -57,14 +53,19 @@ class QtController(QMainWindow):
         self.lineEdit2.setText('0.0')
         self.eps_lineEdit.setText('0.2')
 
-        self.loadButton.clicked.connect(self.get_pointcloud)
-        self.loadTxtButton.clicked.connect(self.load_pointcloud_file)
-        self.resetButton.clicked.connect(self.reset_plot)
-        self.rotateButton.clicked.connect(self.apply_rotation)
-        self.quitButton.clicked.connect(self.close_application)
-        self.saveButton.clicked.connect(self.save_pointcloud_file)
+        self.loadButton.clicked.connect(self.btn_load_pointcloud_ros)
+        self.loadTxtButton.clicked.connect(self.btn_load_pointcloud_file)
+        self.saveButton.clicked.connect(self.btn_save_pointcloud_file)
+        self.resetButton.clicked.connect(self.btn_reset_plot)
+        self.rotateButton.clicked.connect(self.btn_apply_rotation)
+        self.quitButton.clicked.connect(self.btn_quit)
 
-    def load_pointcloud_file(self):
+    def btn_load_pointcloud_ros(self):
+        self.points.extend(self.ros_node.points)
+        print("point 개수 : ", len(self.points))
+        self.plot_points()
+
+    def btn_load_pointcloud_file(self):
         """포인트 클라우드 텍스트 파일을 선택하고 로드합니다."""
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getOpenFileName(self, "포인트 클라우드 파일 선택", "", "Text Files (*.txt);;All Files (*)", options=options)
@@ -79,7 +80,7 @@ class QtController(QMainWindow):
             self.plot_points()
             print(f"Successfully loaded {len(new_points)} points from {file_name}")
 
-    def save_pointcloud_file(self):
+    def btn_save_pointcloud_file(self):
         """현재 포인트를 텍스트 파일로 저장합니다."""
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getSaveFileName(self, "Save Point Cloud", "", "Text Files (*.txt);;All Files (*)", options=options)
@@ -87,25 +88,32 @@ class QtController(QMainWindow):
             np.savetxt(file_name, self.points, fmt='%f', delimiter=' ')
             print(f"Successfully saved {len(self.points)} points to {file_name}")
 
-    def close_application(self):
-        """애플리케이션 종료를 처리합니다."""
-        self.close()
-        self.ros_node.destroy_node()
-        rclpy.shutdown()
-
-    def get_pointcloud(self):
-        self.points.extend(self.ros_node.points)
-        print("point 개수 : ", len(self.points))
-        self.plot_points()
-
-    def reset_plot(self):
+    def btn_reset_plot(self):
         # 점 리스트 초기화
         self.points = []
         self.x_offset = 0
         self.y_offset = 0
         self.z_offset = 0
-        self.current_range = self.default_range  # 스케일 초기화
         self.plot_points()
+
+    def btn_apply_rotation(self):
+        # Roll, Pitch, Yaw 값을 가져와서 회전 적용
+        try:
+            roll = float(self.lineEdit0.text())
+            pitch = float(self.lineEdit1.text())
+            yaw = float(self.lineEdit2.text())
+            self.rotated_points = self.ros_node.rotate_points(self.points, roll, pitch, yaw)
+            self.plot_points(rotate=True)  # 회전 후 점 다시 플로팅
+        except ValueError:
+            print("유효한 숫자를 입력하세요.")
+
+    def btn_quit(self):
+        """애플리케이션 종료를 처리합니다."""
+        self.close()
+        self.ros_node.destroy_node()
+        rclpy.shutdown()
+
+
 
     def plot_points(self, rotate=False):
         # 3D 플롯 초기화
@@ -124,7 +132,7 @@ class QtController(QMainWindow):
         else:
             if self.points:
                 closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.points, float(self.eps_lineEdit.text()))
-        print(clust)
+
         if closest:     
             closest = np.transpose(closest)
             ax3D.scatter(closest[0], closest[1], closest[2], c='g', marker='o', s=2)
@@ -153,7 +161,7 @@ class QtController(QMainWindow):
                 # 법선 벡터 끝점
                 ax3D.quiver(start[0], start[1], start[2],
                         normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
-                        length=0.1, arrow_length_ratio = 0.3, color='r')
+                        length=0.1,color='r')
 
 
         ax3D.set_xlabel('X')
@@ -190,17 +198,6 @@ class QtController(QMainWindow):
         # 업데이트된 플롯을 표시
         self.canvas3D.draw()
         self.canvas2D.draw()
-
-    def apply_rotation(self):
-        # Roll, Pitch, Yaw 값을 가져와서 회전 적용
-        try:
-            roll = float(self.lineEdit0.text())
-            pitch = float(self.lineEdit1.text())
-            yaw = float(self.lineEdit2.text())
-            self.rotated_points = self.ros_node.rotate_points(self.points, roll, pitch, yaw)
-            self.plot_points(rotate=True)  # 회전 후 점 다시 플로팅
-        except ValueError:
-            print("유효한 숫자를 입력하세요.")
 
     def run_ros_node(self):
         rclpy.init()
