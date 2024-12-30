@@ -1,4 +1,5 @@
 import numpy as np
+
 def get_normal_vector(y, x, data):
     """주어진 (y, x) 위치의 법선 벡터를 계산하는 함수."""
     cross_vector = np.zeros(3)
@@ -41,7 +42,6 @@ def get_normal_vector(y, x, data):
         cross_vector /= np.linalg.norm(cross_vector)
 
     return cross_vector
-
 
 def get_normal_vectors(data):
     """주어진 포인트 클라우드 데이터의 모든 법선 벡터를 계산하는 함수."""
@@ -99,8 +99,6 @@ def visualize_normals(data, normals):
     ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
     plt.show()
-
-# 메인 실행 부분
 
 if __name__ == '__main__':
     from pointcloud_data.cluster_data import data
