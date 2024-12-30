@@ -55,13 +55,12 @@ class QtController(QMainWindow):
         self.resetButton.clicked.connect(self.btn_reset_plot)
         self.quitButton.clicked.connect(self.btn_quit)
 
-    def btn_load_pointcloud_ros(self):
+    def btn_load_pointcloud_ros(self): # ROS Pointcloud2 데이터 불러오기
         self.points.extend(self.ros_node.points)
         print("point 개수 : ", len(self.points))
         self.plot_points()
 
-    def btn_load_pointcloud_file(self):
-        """포인트 클라우드 텍스트 파일을 선택하고 로드합니다."""
+    def btn_load_pointcloud_file(self): # Pointcloud txt 파일 불러오기
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getOpenFileName(self, "포인트 클라우드 파일 선택", "", "Text Files (*.txt);;All Files (*)", options=options)
         if file_name:
@@ -75,15 +74,14 @@ class QtController(QMainWindow):
             self.plot_points()
             print(f"Successfully loaded {len(new_points)} points from {file_name}")
 
-    def btn_save_pointcloud_file(self):
-        """현재 포인트를 텍스트 파일로 저장합니다."""
+    def btn_save_pointcloud_file(self): # 현재 Pointcloud txt 파일로 저장
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getSaveFileName(self, "Save Point Cloud", "", "Text Files (*.txt);;All Files (*)", options=options)
         if file_name:
             np.savetxt(file_name, self.points, fmt='%f', delimiter=' ')
             print(f"Successfully saved {len(self.points)} points to {file_name}")
 
-    def btn_reset_plot(self):
+    def btn_reset_plot(self): # 현재 Pointcloud 초기화
         # 점 리스트 초기화
         self.points = []
         self.x_offset = 0
@@ -91,18 +89,23 @@ class QtController(QMainWindow):
         self.z_offset = 0
         self.plot_points()
 
-    def btn_quit(self):
-        """애플리케이션 종료를 처리합니다."""
+    def btn_quit(self): # 프로그램 종료
         self.close()
         self.ros_node.destroy_node()
         rclpy.shutdown()
 
-
-
     def plot_points(self):
-        # 3D 플롯 초기화
         self.figure3D.clear()
+        self.figure2D.clear()
+
         ax3D = self.figure3D.add_subplot(111, projection='3d')
+        ax2D = self.figure2D.add_subplot(111)
+
+        ax3D.set_xlabel('X')
+        ax3D.set_ylabel('Y')
+        ax3D.set_zlabel('Z')
+        ax2D.axis([0, 43, 0, 23])
+        ax2D.invert_yaxis()
         
         closest = []
         remaining = []
@@ -113,6 +116,7 @@ class QtController(QMainWindow):
         if self.points:
             closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.points, float(self.eps_lineEdit.text()))
 
+        # 클러스터링 된 부분 시각화
         if closest:     
             closest = np.transpose(closest)
             ax3D.scatter(closest[0], closest[1], closest[2], c='g', marker='o', s=2)
@@ -120,47 +124,41 @@ class QtController(QMainWindow):
             y_min, y_max = closest[1].min(), closest[1].max()
             z_min, z_max = closest[2].min(), closest[2].max()
 
-            # 초록색 박스 그리기
+            # 초록색 박스 시각화
             ax3D.bar3d(x_min, y_min, z_min, 
                     x_max - x_min, y_max - y_min, z_max - z_min, 
                     color='green', alpha=0.2)
 
-
+        # 클러스터링 나머지 부분 시각화
         if remaining:     
             remaining = np.transpose(remaining)
             ax3D.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o', s=2)
 
+        # 클러스터링 된 데이터에서의 법선 벡터 구하기
         if(clust.size > 0):
             normals = pcl_normal_vector.get_normal_vectors(clust)
             
+            for y in range(1, clust.shape[0] - 1):
+                for x in range(1, clust.shape[1] - 1):
+                    # 법선 벡터 시작점
+                    start = clust[y, x]
+                    # 법선 벡터 끝점
+                    length = 0.1
+                    end = start[0] + normals[y, x, 0], start[1] + normals[y, x, 1], start[2] + normals[y, x, 2]
+                    ax3D.quiver(start[0], start[1], start[2],
+                            normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
+                            length=length,color='r')
 
-        for y in range(1, clust.shape[0] - 1):
-            for x in range(1, clust.shape[1] - 1):
-                # 법선 벡터 시작점
-                start = clust[y, x]
-                # 법선 벡터 끝점
-                ax3D.quiver(start[0], start[1], start[2],
-                        normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
-                        length=0.1,color='r')
 
 
-        ax3D.set_xlabel('X')
-        ax3D.set_ylabel('Y')
-        ax3D.set_zlabel('Z')
-
-        # 2D 플롯 초기화
-        self.figure2D.clear()
-        ax2D = self.figure2D.add_subplot(111)
-        ax2D.axis([0, 43, 0, 23])
-        ax2D.invert_yaxis()
         
-        if image.size > 0:
-            # 이미지를 2D 플롯에 표시
-            ax2D.imshow(image, cmap='gray')  # 필요한 경우 cmap을 변경하세요.
+        # 클러스터링 된 물체의 위치를 Image로 시각화
+        if(image.size > 0):
+            ax2D.imshow(image, cmap='gray')
             ax2D.axis([0, 43, 0, 23])
             ax2D.invert_yaxis()
 
-        # x, y, z 축의 범위를 동일하게 설정
+        # ax3D x, y, z 축의 범위를 동일하게 설정
         all_points = np.transpose(self.points)
         if all_points.size > 0:
             max_range = np.array([all_points[0].max() - all_points[0].min(),
@@ -175,7 +173,8 @@ class QtController(QMainWindow):
             ax3D.set_ylim(mid_y - max_range, mid_y + max_range)
             ax3D.set_zlim(mid_z - max_range, mid_z + max_range)
 
-        # 업데이트된 플롯을 표시
+
+
         self.canvas3D.draw()
         self.canvas2D.draw()
 
