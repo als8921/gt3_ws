@@ -9,6 +9,7 @@ from ros_node import ROSNode
 import rclpy
 from PyQt5 import uic, QtCore
 import pcl_clustering
+import pcl_normal_vector
 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -105,6 +106,7 @@ class QtController(QMainWindow):
         self.z_offset = 0
         self.current_range = self.default_range  # 스케일 초기화
         self.plot_points()
+
     def plot_points(self, rotate=False):
         # 3D 플롯 초기화
         self.figure3D.clear()
@@ -139,6 +141,20 @@ class QtController(QMainWindow):
         if remaining:     
             remaining = np.transpose(remaining)
             ax3D.scatter(remaining[0], remaining[1], remaining[2], c='grey', marker='o', s=2)
+
+        if(clust.size > 0):
+            normals = pcl_normal_vector.get_normal_vectors(clust)
+            
+
+        for y in range(1, clust.shape[0] - 1):
+            for x in range(1, clust.shape[1] - 1):
+                # 법선 벡터 시작점
+                start = clust[y, x]
+                # 법선 벡터 끝점
+                ax3D.quiver(start[0], start[1], start[2],
+                        normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
+                        length=0.1, arrow_length_ratio = 0.3, color='r')
+
 
         ax3D.set_xlabel('X')
         ax3D.set_ylabel('Y')
