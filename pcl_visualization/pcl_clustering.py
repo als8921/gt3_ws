@@ -6,7 +6,7 @@ def cluster_pointcloud(pointcloud, _eps):
     temp_points = []
     original_indices = []  # 원래 인덱스를 저장할 리스트 추가
     for idx, (x, y, z) in enumerate(pointcloud):
-        if(x != 0 and y != 0 and z != 0):
+        if x != 0 and y != 0 and z != 0:
             temp_points.append([x, y, z])
             original_indices.append(idx)  # 원래 인덱스 추가
 
@@ -46,17 +46,15 @@ def cluster_pointcloud(pointcloud, _eps):
 
     # closest_cluster_data의 인덱스 찾기 (원래 인덱스 기반)
     closest_indices = [original_indices[i] for i in np.where(labels == closest_cluster_label)[0].tolist()]
-    
-
 
     width, height = 43, 24
     image = np.ones((height, width, 3))
-    clust = np.array([])
+    clust = np.full((height + 2, width + 2, 3), np.nan)  # clust 배열 초기화
 
-
-    if(len(pointcloud) <= 1032):
+    if len(pointcloud) <= 1032:
         min_x, max_x = width, -1
         min_y, max_y = height, -1
+
         for index in closest_indices:
             y = index // width
             x = index % width
@@ -65,17 +63,13 @@ def cluster_pointcloud(pointcloud, _eps):
             min_y = min(min_y, y)
             max_y = max(max_y, y)
             image[y][x] = [0, 0, 0]  # 검은색으로 설정
-        
 
-
-        if(min_x < max_x and min_y < max_y):
-            clust = np.full((max_y - min_y + 3, max_x - min_x + 3, 3), np.nan)
-
-        for index in closest_indices:
-            y = index // width
-            x = index % width
-            clust[y - min_y + 1][x - min_x + 1] = pointcloud[index]
-    else:
-        clust = np.array([])
+        # min_x와 min_y가 유효한 경우에만 클러스터 배열에 점 추가
+        if min_x < max_x and min_y < max_y:
+            for index in closest_indices:
+                y = index // width
+                x = index % width
+                if 0 <= y - min_y + 1 < clust.shape[0] and 0 <= x - min_x + 1 < clust.shape[1]:
+                    clust[y - min_y + 1][x - min_x + 1] = pointcloud[index]
 
     return closest_cluster_data.tolist(), remaining_data.tolist(), image, closest_indices, clust
