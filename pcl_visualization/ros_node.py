@@ -1,9 +1,7 @@
 import rclpy
 import numpy as np
 from rclpy.node import Node
-from std_srvs.srv import Trigger
-from std_msgs.msg import String
-from sensor_msgs.msg import PointCloud2, Image
+from sensor_msgs.msg import PointCloud2
 from nav_msgs.msg import Odometry
 
 import tf2_ros
