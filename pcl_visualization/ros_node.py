@@ -20,6 +20,8 @@ class ROSNode(Node):
         self.points = []
         self.robot_pos = [0, 0, 0, 0, 0, 0]     # [x, y, z, roll, pitch, yaw]
 
+        self.end_pos = [0, 0, 0]
+
 
     def odom_callback(self, msg):
         pos = msg.pose.pose.position
@@ -46,6 +48,7 @@ class ROSNode(Node):
 
         # 방금 계산한 끝점 위치를 구하고 포인트 클라우드를 변환합니다.
         end_effector_position = self.calculate_end_effector_position()
+        self.end_pos = end_effector_position[:3]
         self.points = self.transform_points(points, end_effector_position)
 
     def calculate_end_effector_position(self):

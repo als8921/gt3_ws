@@ -2,7 +2,8 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
-def cluster_pointcloud(pointcloud, _eps):
+def cluster_pointcloud(origin_pos, pointcloud, _eps):
+    print(origin_pos)
     temp_points = []
     original_indices = []  # 원래 인덱스를 저장할 리스트 추가
     for idx, (x, y, z) in enumerate(pointcloud):
@@ -23,8 +24,8 @@ def cluster_pointcloud(pointcloud, _eps):
     num_clusters = len(set(labels)) - (1 if -1 in labels else 0)
     print(f'발견된 클러스터 수: {num_clusters}')
 
-    # 0, 0, 0에 가장 가까운 클러스터 찾기
-    origin = np.array([0, 0, 0])
+    # origin_pos에 가장 가까운 클러스터 찾기
+    origin = np.array(origin_pos)
     closest_cluster_label = None
     closest_distance = float('inf')
 

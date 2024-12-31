@@ -114,7 +114,7 @@ class QtController(QMainWindow):
         clust = np.array([])
         
         if self.points:
-            closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.points, float(self.eps_lineEdit.text()))
+            closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.ros_node.end_pos, self.points, float(self.eps_lineEdit.text()))
 
         # 클러스터링 된 부분 시각화
         if closest:     
