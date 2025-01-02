@@ -44,11 +44,6 @@ class ROSNode(Node):
             z = data[i * point_step // 4 + 2]
             points.append((x, y, z))
 
-        # 방금 계산한 끝점 위치를 구하고 포인트 클라우드를 변환합니다.
-        # end_effector_position = self.calculate_end_effector_position()
-        # self.end_pos = end_effector_position[:3]
-        # self.points = self.transform_points(points, end_effector_position)
-
         self.points = points
 
     def calculate_end_effector_position(self):
