@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-def correction(data):
+def correction(data, range_horizontal = 10, range_vertical = 10):
     """
     PointCloud Clust 데이터의 빈 값을 보정하여 리턴합니다.
     
@@ -10,6 +10,9 @@ def correction(data):
     Args:
         data (np.array): 클러스터 데이터, shape은 (width, height, 3)입니다.
                          각 요소는 [x, y, z] 좌표를 나타냅니다.
+        range_horizontal: 수평방향 보정 허용 NaN 개수  
+        range_vertical:   수직방향 보정 허용 NaN 개수  
+        
     
     Returns:
         np.array: 보정된 클러스터 데이터, shape은 (width, height, 3)입니다.
@@ -26,7 +29,7 @@ def correction(data):
                 nan_count += 1
                 
             else:
-                if nan_count > 0 and nan_count < 10:
+                if nan_count > 0 and nan_count < range_horizontal:
                     start_idx = x - nan_count
                     end_idx = x - 1
                     
@@ -47,7 +50,7 @@ def correction(data):
                 nan_count += 1
                 
             else:
-                if nan_count > 0 and nan_count < 10:
+                if nan_count > 0 and nan_count < range_vertical:
                     start_idx = y - nan_count
                     end_idx = y - 1
                     

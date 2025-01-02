@@ -129,7 +129,7 @@ class QtController(QMainWindow):
             remaining = self.ros_node.transform_points(remaining, end_effector_pos)
             plot_points = np.transpose(closest if closest else remaining)
 
-            clust = pcl_correction.correction(self.create_clust(closest, closest_idx))
+            clust = pcl_correction.correction(self.create_clust(closest, closest_idx), 20, 10)
 
         # 클러스터링 된 부분 시각화
         if closest:     
