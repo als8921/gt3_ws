@@ -10,6 +10,7 @@ import rclpy
 from PyQt5 import uic, QtCore
 import pcl_clustering
 import pcl_normal_vector
+import pcl_correction
 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -128,7 +129,7 @@ class QtController(QMainWindow):
             remaining = self.ros_node.transform_points(remaining, end_effector_pos)
             plot_points = np.transpose(closest if closest else remaining)
 
-            clust = self.create_clust(closest, closest_idx)
+            clust = pcl_correction.correction(self.create_clust(closest, closest_idx))
 
         # 클러스터링 된 부분 시각화
         if closest:     
