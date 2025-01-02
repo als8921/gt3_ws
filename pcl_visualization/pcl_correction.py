@@ -1,8 +1,8 @@
 import numpy as np
 from copy import deepcopy
 def correction(data):
-    correctionHorizontal = deepcopy(data)
-    correctionVertical = deepcopy(data)
+    correctionHorizontal = np.array(deepcopy(data))
+    correctionVertical = np.array(deepcopy(data))
 
     for y in range(correctionHorizontal.shape[0]):
         nan_count = 0
@@ -28,7 +28,6 @@ def correction(data):
 
                 nan_count = 0
 
-    correctionVertical = np.transpose(correctionVertical)
 
     for y in range(correctionVertical.shape[0]):
         nan_count = 0
@@ -54,8 +53,6 @@ def correction(data):
 
                 nan_count = 0
 
-
-    correctionVertical = np.transpose(correctionVertical)
     return correctionVertical
 
 
