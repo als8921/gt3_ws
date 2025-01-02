@@ -1,6 +1,20 @@
 import numpy as np
 from copy import deepcopy
 def correction(data):
+    """
+    PointCloud Clust 데이터의 빈 값을 보정하여 리턴합니다.
+    
+    이 함수는 주어진 3차원 PointCloud 클러스터 데이터에서 NaN 값을 찾아 보정합니다.
+    가로 및 세로 방향으로 NaN 값을 보정한 후, 두 보정값 중 NaN이 아닌 값을 선택하여 최종적으로 리턴합니다.
+    
+    Args:
+        data (np.array): 클러스터 데이터, shape은 (width, height, 3)입니다.
+                         각 요소는 [x, y, z] 좌표를 나타냅니다.
+    
+    Returns:
+        np.array: 보정된 클러스터 데이터, shape은 (width, height, 3)입니다.
+                  NaN 값이 보정되어 있습니다.
+    """
     correctionHorizontal = np.array(deepcopy(data))
     correctionVertical = np.array(deepcopy(data))
     final_correction = np.array(deepcopy(data))
@@ -19,7 +33,6 @@ def correction(data):
                     left_value = correctionHorizontal[y][start_idx - 1]
                     right_value = correctionHorizontal[y][x]
                     
-                    # NaN 보완
                     if not np.isnan(left_value).any() and not np.isnan(right_value).any():
 
                         fill_values = np.linspace(left_value, right_value, nan_count + 2)[1:-1]
@@ -41,7 +54,6 @@ def correction(data):
                     left_value = correctionVertical[start_idx - 1][x] if start_idx > 0 else np.nan
                     right_value = correctionVertical[y][x]
                     
-                    # NaN 보완
                     if not np.isnan(left_value).any() and not np.isnan(right_value).any():
                         fill_values = np.linspace(left_value, right_value, nan_count + 2)[1:-1]
                         correctionVertical[start_idx:end_idx + 1, x] = fill_values
@@ -54,13 +66,11 @@ def correction(data):
                 horizontal_value = correctionHorizontal[y][x]
                 vertical_value = correctionVertical[y][x]
 
-                # NaN이 아닌 값 중에서 선택
                 if not np.isnan(horizontal_value).any() and np.isnan(vertical_value).any():
                     final_correction[y][x] = horizontal_value
                 elif np.isnan(horizontal_value).any() and not np.isnan(vertical_value).any():
                     final_correction[y][x] = vertical_value
                 elif not np.isnan(horizontal_value).any() and not np.isnan(vertical_value).any():
-                    # 두 값이 모두 NaN이 아닌 경우
                     if(horizontal_value[0] > vertical_value[0]):
                         final_correction[y][x] = vertical_value
                     else:
@@ -74,7 +84,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
     import pcl_normal_vector
-    
+
     def visualize_normals(data, normals):
         """포인트 클라우드와 법선 벡터를 시각화하는 함수."""
         fig = plt.figure(figsize=(16, 16))
