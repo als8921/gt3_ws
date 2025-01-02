@@ -95,6 +95,13 @@ class QtController(QMainWindow):
         rclpy.shutdown()
 
     def plot_points(self):
+        """
+            1. DepthCamera의 PointCloud를 받아오기
+            2. Clustering 진행
+            3. (ADD) 데이터 보완
+            4. Transform
+            5. Plot
+        """
         self.figure3D.clear()
         self.figure2D.clear()
 
@@ -106,15 +113,40 @@ class QtController(QMainWindow):
         ax3D.set_zlabel('Z')
         ax2D.axis([0, 43, 0, 23])
         ax2D.invert_yaxis()
+        plot_points = np.array([])
         
         closest = []
         remaining = []
-        cluster_idx = []
+        closest_idx = []
         image = np.array([])
         clust = np.array([])
         
         if self.points:
-            closest, remaining, image, cluster_idx, clust = pcl_clustering.cluster_pointcloud(self.ros_node.end_pos, self.points, float(self.eps_lineEdit.text()))
+            closest, remaining, closest_idx, image = pcl_clustering.cluster_pointcloud([0, 0, 0], self.points, float(self.eps_lineEdit.text()))
+            end_effector_pos = self.ros_node.calculate_end_effector_position()
+            closest = self.ros_node.transform_points(closest, end_effector_pos)
+            remaining = self.ros_node.transform_points(remaining, end_effector_pos)
+            plot_points = np.transpose(closest if closest else remaining)
+
+            width, height = 43, 24
+            min_x, max_x = width, -1
+            min_y, max_y = height, -1
+            for idx in closest_idx:
+                y = idx // width
+                x = idx % width
+                min_x = min(min_x, x)
+                max_x = max(max_x, x)
+                min_y = min(min_y, y)
+                max_y = max(max_y, y)
+            
+
+            if(min_x < max_x and min_y < max_y):
+                clust = np.full((max_y - min_y + 3, max_x - min_x + 3, 3), np.nan)
+
+                for i, idx in enumerate(closest_idx):
+                    y = idx // width
+                    x = idx % width
+                    clust[y - min_y + 1][x - min_x + 1] = closest[i]
 
         # 클러스터링 된 부분 시각화
         if closest:     
@@ -144,7 +176,7 @@ class QtController(QMainWindow):
                     start = clust[y, x]
                     # 법선 벡터 끝점
                     length = 0.1
-                    end = start[0] + normals[y, x, 0], start[1] + normals[y, x, 1], start[2] + normals[y, x, 2]
+                    # end = start[0] + normals[y, x, 0], start[1] + normals[y, x, 1], start[2] + normals[y, x, 2]
                     ax3D.quiver(start[0], start[1], start[2],
                             normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
                             length=length,color='r')
@@ -159,15 +191,14 @@ class QtController(QMainWindow):
             ax2D.invert_yaxis()
 
         # ax3D x, y, z 축의 범위를 동일하게 설정
-        all_points = np.transpose(self.points)
-        if all_points.size > 0:
-            max_range = np.array([all_points[0].max() - all_points[0].min(),
-                                all_points[1].max() - all_points[1].min(),
-                                all_points[2].max() - all_points[2].min()]).max() / 2.0
+        if plot_points.size > 0:
+            max_range = np.array([plot_points[0].max() - plot_points[0].min(),
+                                plot_points[1].max() - plot_points[1].min(),
+                                plot_points[2].max() - plot_points[2].min()]).max() / 2.0
 
-            mid_x = (all_points[0].max() + all_points[0].min()) * 0.5
-            mid_y = (all_points[1].max() + all_points[1].min()) * 0.5
-            mid_z = (all_points[2].max() + all_points[2].min()) * 0.5
+            mid_x = (plot_points[0].max() + plot_points[0].min()) * 0.5
+            mid_y = (plot_points[1].max() + plot_points[1].min()) * 0.5
+            mid_z = (plot_points[2].max() + plot_points[2].min()) * 0.5
 
             ax3D.set_xlim(mid_x - max_range, mid_x + max_range)
             ax3D.set_ylim(mid_y - max_range, mid_y + max_range)
