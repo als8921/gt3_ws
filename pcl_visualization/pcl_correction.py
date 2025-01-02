@@ -54,11 +54,11 @@ def correction(data, range_horizontal = 10, range_vertical = 10):
                     start_idx = y - nan_count
                     end_idx = y - 1
                     
-                    left_value = correctionVertical[start_idx - 1][x] if start_idx > 0 else np.nan
-                    right_value = correctionVertical[y][x]
+                    up_value = correctionVertical[start_idx - 1][x] if start_idx > 0 else np.nan
+                    down_value = correctionVertical[y][x]
                     
-                    if not np.isnan(left_value).any() and not np.isnan(right_value).any():
-                        fill_values = np.linspace(left_value, right_value, nan_count + 2)[1:-1]
+                    if not np.isnan(up_value).any() and not np.isnan(down_value).any():
+                        fill_values = np.linspace(up_value, down_value, nan_count + 2)[1:-1]
                         correctionVertical[start_idx:end_idx + 1, x] = fill_values
 
                 nan_count = 0
