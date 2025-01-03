@@ -82,6 +82,9 @@ def structed_cluster(closest, closest_idx):
     Returns:
         numpy.ndarray: 클러스터의 점(x, y, z) 데이터를 담고 있는 배열입니다.
     """
+    if(not closest):
+        return np.array([])
+    
     width, height = 43, 24
     min_x, max_x = width, -1
     min_y, max_y = height, -1
