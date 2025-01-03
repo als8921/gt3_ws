@@ -124,7 +124,7 @@ class QtController(QMainWindow):
         clust = np.array([])
         
         if self.points:
-            closest, remaining, closest_idx, image = pcl_clustering.clustering_pointcloud([0, 0, 0], self.points, float(self.eps_lineEdit.text()))
+            closest, remaining, closest_idx, image = pcl_clustering.clustering_pointcloud(self.points, float(self.eps_lineEdit.text()))
             closest = pcl_transformation.transform_points(closest, self.ros_node.end_effector_pos)
             remaining = pcl_transformation.transform_points(remaining, self.ros_node.end_effector_pos)
             plot_points = np.transpose(closest if closest else remaining)
