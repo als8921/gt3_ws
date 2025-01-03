@@ -1,7 +1,16 @@
 import numpy as np
 
 def get_normal_vector(y, x, data):
-    """주어진 (y, x) 위치의 법선 벡터를 계산하는 함수."""
+    """주어진 (y, x) 위치의 법선 벡터를 계산합니다.
+
+    Args:
+        y (int): y 좌표.
+        x (int): x 좌표.
+        data (numpy.ndarray): 포인트 클라우드 데이터.
+
+    Returns:
+        numpy.ndarray: (x, y, z) 형식의 법선 벡터.
+    """
     cross_vector = np.zeros(3)
 
     # 5x5 영역으로 법선 벡터 계산
@@ -44,7 +53,14 @@ def get_normal_vector(y, x, data):
     return cross_vector
 
 def get_normal_vectors(data):
-    """주어진 포인트 클라우드 데이터의 모든 법선 벡터를 계산하는 함수."""
+    """주어진 포인트 클라우드 데이터의 모든 법선 벡터를 계산합니다.
+
+    Args:
+        data (numpy.ndarray): 포인트 클라우드 데이터.
+
+    Returns:
+        numpy.ndarray: 각 점에 대한 법선 벡터를 포함하는 배열.
+    """
     rows, cols, _ = data.shape
     normals = np.zeros((rows, cols, 3))
 
@@ -55,7 +71,12 @@ def get_normal_vectors(data):
     return normals
 
 def visualize_normals(data, normals):
-    """포인트 클라우드와 법선 벡터를 시각화하는 함수."""
+    """포인트 클라우드와 법선 벡터를 시각화합니다.
+
+    Args:
+        data (numpy.ndarray): 포인트 클라우드 데이터.
+        normals (numpy.ndarray): 법선 벡터 데이터.
+    """
     fig = plt.figure(figsize=(16, 16))
     ax = fig.add_subplot(111, projection='3d')
 
@@ -70,7 +91,7 @@ def visualize_normals(data, normals):
             # 법선 벡터 끝점
             ax.quiver(start[0], start[1], start[2],
                       normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
-                      length=0.3, arrow_length_ratio = 0.1, color='r')
+                      length=0.3, arrow_length_ratio=0.1, color='r')
 
     # 축 레이블 설정
     ax.set_xlabel('X')
