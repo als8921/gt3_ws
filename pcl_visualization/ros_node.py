@@ -69,7 +69,7 @@ class ROSNode(Node):
         arm_origin_z = robot_z + z
 
         # 로봇팔 끝점의 상대 위치 (여기서는 예시로 설정)
-        end_offset = [0.5, 0.0, 0.0, 0.0, 0.0, 0.0]  # [x, y, z, roll, pitch, yaw]
+        end_offset = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [x, y, z, roll, pitch, yaw]
 
         # 로봇팔 끝점의 절대 좌표 계산
         end_effector_x = arm_origin_x + end_offset[0]
