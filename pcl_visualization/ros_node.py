@@ -16,9 +16,8 @@ class ROSNode(Node):
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
         self.points = []
-        self.robot_pos = [0, 0, 0, 0, 0, 0]     # [x, y, z, roll, pitch, yaw]
-
-        self.end_pos = [0, 0, 0]
+        self.odom_pos = [0, 0, 0, 0, 0, 0]          # [x, y, z, roll, pitch, yaw]
+        self.end_effector_pos = [0, 0, 0, 0, 0, 0]  # [x, y, z, roll, pitch, yaw]
 
 
     def odom_callback(self, msg):
@@ -28,7 +27,7 @@ class ROSNode(Node):
         x, y, z = pos.x, pos.y, pos.z
         r, p, yaw = tf_transformations.euler_from_quaternion([ori.x, ori.y, ori.z, ori.w])
 
-        self.robot_pos = [x, y, z, r, p, yaw]
+        self.odom_pos = [x, y, z, r, p, yaw]
 
     def point_cloud_callback(self, msg):
         point_step = msg.point_step
@@ -45,6 +44,7 @@ class ROSNode(Node):
             points.append((x, y, z))
 
         self.points = points
+        self.end_effector_pos = self.calculate_end_effector_position()
 
     def calculate_end_effector_position(self):
         try:
@@ -61,7 +61,7 @@ class ROSNode(Node):
 
         # print(x, y, z, np.degrees([r, p, yaw]))
         # 로봇의 현재 위치
-        robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.robot_pos
+        robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.odom_pos
 
         # 로봇팔 원점의 절대 좌표 계산
         arm_origin_x = robot_x + x
@@ -82,44 +82,6 @@ class ROSNode(Node):
         end_effector_yaw = robot_yaw + yaw + end_offset[5]
 
         return (end_effector_x, end_effector_y, end_effector_z, end_effector_r, end_effector_p, end_effector_yaw)
-
-    def transform_points(self, points, end_effector_position):
-        # 끝점 위치와 자세를 분리
-        end_x, end_y, end_z, end_r, end_p, end_yaw = end_effector_position
-
-        # 회전 행렬을 계산
-        rotation_matrix = self.get_rotation_matrix(end_r, end_p, end_yaw)
-
-        # 변환된 포인트 리스트
-        transformed_points = []
-
-        for point in points:
-            if(point == (0, 0, 0)):
-                transformed_points.append([0.0, 0.0, 0.0])
-            else:    
-                rotated_point = rotation_matrix @ np.array(point)
-                transformed_point = rotated_point + np.array([end_x, end_y, end_z])
-                transformed_points.append(transformed_point)
-
-        return transformed_points
-
-    def get_rotation_matrix(self, roll, pitch, yaw):
-
-        # 회전 행렬 정의
-        R_x = np.array([[1, 0, 0],
-                        [0, np.cos(roll), -np.sin(roll)],
-                        [0, np.sin(roll), np.cos(roll)]])
-
-        R_y = np.array([[np.cos(pitch), 0, np.sin(pitch)],
-                        [0, 1, 0],
-                        [-np.sin(pitch), 0, np.cos(pitch)]])
-
-        R_z = np.array([[np.cos(yaw), -np.sin(yaw), 0],
-                        [np.sin(yaw), np.cos(yaw), 0],
-                        [0, 0, 1]])
-
-        # 전체 회전 행렬
-        return R_z @ R_y @ R_x
 
     def spin(self):
         rclpy.spin(self)

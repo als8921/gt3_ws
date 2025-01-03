@@ -2,8 +2,21 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
-def cluster_pointcloud(origin_pos, pointcloud, _eps):
-    print(origin_pos)
+def clustering_pointcloud(pointcloud, _eps):
+    """
+    주어진 점군에 대해 DBSCAN 클러스터링을 수행하고, 
+    엔드 이펙터 위치에 가장 가까운 클러스터를 찾습니다.
+
+    Args:
+        pointcloud (list of tuple): 클러스터링할 3D 점들의 리스트입니다.
+        _eps (float): DBSCAN의 epsilon 값입니다.
+    
+    Returns:
+        list: 가장 가까운 클러스터 데이터.
+        list: 나머지 데이터.
+        list: 가장 가까운 클러스터의 원래 인덱스 리스트.
+        numpy.ndarray: 클러스터를 나타내는 이미지 배열.
+    """
     temp_points = []
     original_indices = []  # 원래 인덱스를 저장할 리스트 추가
     for idx, (x, y, z) in enumerate(pointcloud):
@@ -25,7 +38,7 @@ def cluster_pointcloud(origin_pos, pointcloud, _eps):
     print(f'발견된 클러스터 수: {num_clusters}')
 
     # origin_pos에 가장 가까운 클러스터 찾기
-    origin = np.array(origin_pos)
+    origin = np.array([0, 0, 0])
     closest_cluster_label = None
     closest_distance = float('inf')
 
@@ -50,10 +63,42 @@ def cluster_pointcloud(origin_pos, pointcloud, _eps):
 
     width, height = 43, 24
     image = np.ones((height, width, 3))
-    if(len(pointcloud) <= 1032):
+    if len(pointcloud) <= 1032:
         for index in closest_index:
             y = index // width
             x = index % width
             image[y][x] = [0, 0, 0]
 
     return closest_cluster_data.tolist(), remaining_data.tolist(), closest_index, image
+
+def structed_cluster(closest, closest_idx):
+    """
+    가장 가까운 클러스터의 점(x, y, z) 데이터를 생성합니다.
+
+    Args:
+        closest (list): 가장 가까운 클러스터의 데이터 리스트입니다.
+        closest_idx (list): 가장 가까운 클러스터의 원래 인덱스 리스트입니다.
+    
+    Returns:
+        numpy.ndarray: 클러스터의 점(x, y, z) 데이터를 담고 있는 배열입니다.
+    """
+    width, height = 43, 24
+    min_x, max_x = width, -1
+    min_y, max_y = height, -1
+    for idx in closest_idx:
+        y = idx // width
+        x = idx % width
+        min_x = min(min_x, x)
+        max_x = max(max_x, x)
+        min_y = min(min_y, y)
+        max_y = max(max_y, y)
+
+    if min_x < max_x and min_y < max_y:
+        clust = np.full((max_y - min_y + 3, max_x - min_x + 3, 3), np.nan)
+
+        for i, idx in enumerate(closest_idx):
+            y = idx // width
+            x = idx % width
+            clust[y - min_y + 1][x - min_x + 1] = closest[i]
+    
+    return clust

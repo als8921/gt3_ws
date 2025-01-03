@@ -11,6 +11,7 @@ from PyQt5 import uic, QtCore
 import pcl_clustering
 import pcl_normal_vector
 import pcl_correction
+import pcl_transformation
 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -123,14 +124,13 @@ class QtController(QMainWindow):
         clust = np.array([])
         
         if self.points:
-            closest, remaining, closest_idx, image = pcl_clustering.cluster_pointcloud([0, 0, 0], self.points, float(self.eps_lineEdit.text()))
-            end_effector_pos = self.ros_node.calculate_end_effector_position()
-            closest = self.ros_node.transform_points(closest, end_effector_pos)
-            remaining = self.ros_node.transform_points(remaining, end_effector_pos)
+            closest, remaining, closest_idx, image = pcl_clustering.clustering_pointcloud([0, 0, 0], self.points, float(self.eps_lineEdit.text()))
+            closest = pcl_transformation.transform_points(closest, self.ros_node.end_effector_pos)
+            remaining = pcl_transformation.transform_points(remaining, self.ros_node.end_effector_pos)
             plot_points = np.transpose(closest if closest else remaining)
-            clust_temp = self.create_clust(closest, closest_idx)
-            if(clust_temp.size > 0):
-                clust = pcl_correction.correction(clust_temp, 20, 10)
+            clust = pcl_clustering.structed_cluster(closest, closest_idx)
+            if(clust.size > 0):
+                clust = pcl_correction.correction(clust, 20, 10)
 
         # 클러스터링 된 부분 시각화
         if closest:     
@@ -191,27 +191,27 @@ class QtController(QMainWindow):
         self.canvas3D.draw()
         self.canvas2D.draw()
 
-    def create_clust(self, closest, closest_idx):
-        width, height = 43, 24
-        min_x, max_x = width, -1
-        min_y, max_y = height, -1
-        for idx in closest_idx:
-            y = idx // width
-            x = idx % width
-            min_x = min(min_x, x)
-            max_x = max(max_x, x)
-            min_y = min(min_y, y)
-            max_y = max(max_y, y)
+    # def create_clust(self, closest, closest_idx):
+    #     width, height = 43, 24
+    #     min_x, max_x = width, -1
+    #     min_y, max_y = height, -1
+    #     for idx in closest_idx:
+    #         y = idx // width
+    #         x = idx % width
+    #         min_x = min(min_x, x)
+    #         max_x = max(max_x, x)
+    #         min_y = min(min_y, y)
+    #         max_y = max(max_y, y)
             
 
-        if(min_x < max_x and min_y < max_y):
-            clust = np.full((max_y - min_y + 3, max_x - min_x + 3, 3), np.nan)
+    #     if(min_x < max_x and min_y < max_y):
+    #         clust = np.full((max_y - min_y + 3, max_x - min_x + 3, 3), np.nan)
 
-            for i, idx in enumerate(closest_idx):
-                y = idx // width
-                x = idx % width
-                clust[y - min_y + 1][x - min_x + 1] = closest[i]
-        return clust
+    #         for i, idx in enumerate(closest_idx):
+    #             y = idx // width
+    #             x = idx % width
+    #             clust[y - min_y + 1][x - min_x + 1] = closest[i]
+    #     return clust
 
     def run_ros_node(self):
         rclpy.init()
