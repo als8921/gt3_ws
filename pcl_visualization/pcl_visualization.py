@@ -191,28 +191,6 @@ class QtController(QMainWindow):
         self.canvas3D.draw()
         self.canvas2D.draw()
 
-    # def create_clust(self, closest, closest_idx):
-    #     width, height = 43, 24
-    #     min_x, max_x = width, -1
-    #     min_y, max_y = height, -1
-    #     for idx in closest_idx:
-    #         y = idx // width
-    #         x = idx % width
-    #         min_x = min(min_x, x)
-    #         max_x = max(max_x, x)
-    #         min_y = min(min_y, y)
-    #         max_y = max(max_y, y)
-            
-
-    #     if(min_x < max_x and min_y < max_y):
-    #         clust = np.full((max_y - min_y + 3, max_x - min_x + 3, 3), np.nan)
-
-    #         for i, idx in enumerate(closest_idx):
-    #             y = idx // width
-    #             x = idx % width
-    #             clust[y - min_y + 1][x - min_x + 1] = closest[i]
-    #     return clust
-
     def run_ros_node(self):
         rclpy.init()
         self.ros_node = ROSNode()
