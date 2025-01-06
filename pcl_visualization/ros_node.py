@@ -19,7 +19,9 @@ class ROSNode(Node):
         self.mobile_arrival_sub = self.create_subscription(Bool, '/mobile/arrival_flag', self.mobile_arrived_callback, 10)
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
+        
         self.points = []
+        self.rgb_array = []
         self.odom_pos = [0, 0, 0, 0, 0, 0]          # [x, y, z, roll, pitch, yaw]
         self.end_effector_pos = [0, 0, 0, 0, 0, 0]  # [x, y, z, roll, pitch, yaw]
 
@@ -44,13 +46,17 @@ class ROSNode(Node):
         # 포인트 수 계산
         num_points = len(data) // (point_step // 4)
         points = []
+        rgb_array = []
         for i in range(num_points):
             x = data[i * point_step // 4]
             y = data[i * point_step // 4 + 1]
             z = data[i * point_step // 4 + 2]
+            rgb = data[i * point_step // 4 + 3]
             points.append((x, y, z))
+            rgb_array.append(rgb)
 
         self.points = points
+        self.rgb_array = rgb_array
         self.end_effector_pos = self.calculate_end_effector_position()
 
     def calculate_end_effector_position(self):
