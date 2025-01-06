@@ -71,7 +71,7 @@ class ControlNode(Node):
         self.create_subscription(Odometry, '/odom3', self.odom_callback, qos_profile=qos_profile_sensor_data)
         self.create_subscription(Float32MultiArray, '/target', self.command_callback, 10)  # 목표 위치 및 자세 구독
         self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
-        self.bool_publisher = self.create_publisher(Bool, 'trigger_topic', 10)
+        self.pub_arrival_flag = self.create_publisher(Bool, '/mobile/arrival_flag', 10)
 
         self.timer = self.create_timer(1.0 / Hz, self.timer_callback)
 
@@ -223,7 +223,7 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
                 time.sleep(0.5)
-                self.bool_publisher.publish(Bool(data = True))
+                self.pub_arrival_flag.publish(Bool(data = True))
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
