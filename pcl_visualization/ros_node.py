@@ -1,6 +1,7 @@
 import rclpy
 import numpy as np
 from rclpy.node import Node
+from std_msgs.msg import Bool
 from sensor_msgs.msg import PointCloud2
 from nav_msgs.msg import Odometry
 
@@ -13,12 +14,19 @@ class ROSNode(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
+        self.mobile_move_pub = self.create_publisher(Bool, '/mobile/move_flag', 10)
+
+        self.mobile_arrival_sub = self.create_subscription(Bool, '/mobile/arrival_flag', self.mobile_arrived_callback, 10)
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
         self.points = []
         self.odom_pos = [0, 0, 0, 0, 0, 0]          # [x, y, z, roll, pitch, yaw]
         self.end_effector_pos = [0, 0, 0, 0, 0, 0]  # [x, y, z, roll, pitch, yaw]
 
+        self.isArrived = False
+
+    def mobile_arrived_callback(self, msg):
+        self.isArrived = msg.data
 
     def odom_callback(self, msg):
         pos = msg.pose.pose.position
@@ -37,9 +45,8 @@ class ROSNode(Node):
         num_points = len(data) // (point_step // 4)
         points = []
         for i in range(num_points):
-            # x, y, z 축 위치 변경
-            y = -data[i * point_step // 4]
-            x = data[i * point_step // 4 + 1]
+            x = data[i * point_step // 4]
+            y = data[i * point_step // 4 + 1]
             z = data[i * point_step // 4 + 2]
             points.append((x, y, z))
 
