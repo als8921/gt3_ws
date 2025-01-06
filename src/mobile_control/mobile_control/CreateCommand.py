@@ -5,7 +5,7 @@ from collections import deque
 import numpy as np
 
 D_horizontal = 0  # [m] 작업 위치 수평 거리
-D_vertical = 1.5    # [m] 작업 위치 수직 거리   
+D_vertical = 2.0   # [m] 작업 위치 수직 거리   
 D_task = 0.6       # [m] 작업 사이의 거리
 
 class Gear:
