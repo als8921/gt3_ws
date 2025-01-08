@@ -14,6 +14,7 @@ class Gear:
     Neutral = 2
     Differential = 6
     Lateral = 8
+    Rotate = 10
 
 class CommandPositionPublisher(Node):
     def __init__(self):
@@ -79,6 +80,9 @@ class CommandPositionPublisher(Node):
                         self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task, h))
             elif cmd[0] == 'scan':
                 self.get_logger().info(cmd[0])
+                msg = Float32MultiArray()
+                msg.data = [Gear.Rotate, 0, 0, 0, 0]
+                self.publisher_.publish(msg)
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
 
