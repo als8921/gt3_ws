@@ -1,6 +1,5 @@
 import rclpy
 from rclpy.node import Node
-<<<<<<< HEAD
 from std_msgs.msg import String, Header
 import numpy as np
 import os
@@ -8,12 +7,6 @@ import time
 import glob
 from sensor_msgs.msg import PointCloud2, PointField
 from pypcd4 import PointCloud
-=======
-from std_msgs.msg import String
-import os
-import time
-import glob
->>>>>>> 501773c4ef72f28ab94b89981e9a7bb4cc28e58f
 
 class PCDFileHandler(Node):
     def __init__(self, directory):
@@ -21,7 +14,6 @@ class PCDFileHandler(Node):
         self.directory = directory
         self.subscription = self.create_subscription(String, '/unity/cmd', self.listener_callback, 10)
         self.publisher = self.create_publisher(String, '/unity/cmd', 10)
-<<<<<<< HEAD
         self.map_publisher = self.create_publisher(PointCloud2, '/registered_topic', 1)
         self.scan_started = False  # scan_start 메시지 발행 여부 플래그
     def map_publish(self, pc_array):
@@ -48,19 +40,11 @@ class PCDFileHandler(Node):
             pc2_msg.data = pc_data.tobytes()
 
             self.map_publisher.publish(pc2_msg)
-=======
-        self.scan_started = False  # scan_start 메시지 발행 여부 플래그
-
->>>>>>> 501773c4ef72f28ab94b89981e9a7bb4cc28e58f
     def listener_callback(self, msg):
         """메시지를 수신하면 파일 삭제 및 새로운 파일 확인."""
         if msg.data == "scan":
             self.delete_pcd_files()
-<<<<<<< HEAD
             self.check_for_new_files(30)
-=======
-            self.check_for_new_files(5)
->>>>>>> 501773c4ef72f28ab94b89981e9a7bb4cc28e58f
 
     def delete_pcd_files(self):
         """지정된 디렉토리의 모든 .pcd 파일을 삭제."""
@@ -101,7 +85,6 @@ class PCDFileHandler(Node):
         # 확인된 파일 이름에서 숫자 추출
         collected_files = glob.glob(os.path.join(self.directory, '*.pcd'))
         numbers = self.extract_numbers_from_filenames(collected_files)
-<<<<<<< HEAD
         numbers = numbers[1:]
         self.get_logger().info(f'Extracted numbers: {numbers}')
 
@@ -122,14 +105,6 @@ def main(args=None):
     """ROS 2 노드를 초기화하고 실행."""
     rclpy.init(args=args)
     directory = '/home/gt3-3/fastlio/src/FAST_LIO/PCD'  # 여기에 디렉토리 경로를 입력하세요
-=======
-        self.get_logger().info(f'Extracted numbers: {numbers}')
-
-def main(args=None):
-    """ROS 2 노드를 초기화하고 실행."""
-    rclpy.init(args=args)
-    directory = '/home/lmc/gt3_ws/pcd'  # 여기에 디렉토리 경로를 입력하세요
->>>>>>> 501773c4ef72f28ab94b89981e9a7bb4cc28e58f
     pcd_file_handler = PCDFileHandler(directory)
     rclpy.spin(pcd_file_handler)
     pcd_file_handler.destroy_node()
