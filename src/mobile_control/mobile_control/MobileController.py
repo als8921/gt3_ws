@@ -115,6 +115,7 @@ class ControlNode(Node):
             if(self.CmdPos.gearSetting == Gear.Rotate):
                 self.state = State.ScanRotate
                 self.CmdPos.theta = self.Pos.theta
+                self.get_logger().info(f'ScanRotate: ㅁㅇㅁㄴㅇㅁㄴㅇㅁㄴ')
             else:
                 if(math.sqrt((self.CmdPos.x - self.Pos.x) ** 2  + (self.CmdPos.y - self.Pos.y) ** 2) < 0.15):
                     self.state = State.FinalRotate
@@ -134,6 +135,7 @@ class ControlNode(Node):
                 self.scan_rotate_start_time = self.get_clock().now().nanoseconds
                 
             elapsed_time = (self.get_clock().now().nanoseconds - self.scan_rotate_start_time) / 1e9  # 경과 시간 계산
+            self.get_logger().info("RotateScan : {elapsed_time}/30.0[s]")
             if elapsed_time >= 30:  # 30초가 경과했는지 확인
                 self.state = State.FinalRotate  # 상태를 FinalRotate으로 변경
                 self.scan_rotate_start_time = None  # 타이머 초기화

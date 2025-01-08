@@ -81,7 +81,7 @@ class CommandPositionPublisher(Node):
             elif cmd[0] == 'scan':
                 self.get_logger().info(cmd[0])
                 msg = Float32MultiArray()
-                msg.data = [Gear.Rotate, 0, 0, 0, 0]
+                msg.data = [float(Gear.Rotate), 0.0, 0.0, 0.0, 0.0]
                 self.publisher_.publish(msg)
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
