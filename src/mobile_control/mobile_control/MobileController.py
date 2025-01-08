@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from yhs_can_interfaces.msg import CtrlCmd
-from std_msgs.msg import Float32MultiArray, Bool
+from std_msgs.msg import Float32MultiArray, Bool, String
 from rclpy.qos import qos_profile_sensor_data
 import tf_transformations
 import math
@@ -46,6 +46,7 @@ class Command(Position):
     def __init__(self):
         super().__init__()
         self.gearSetting = Gear.Differential
+        self.height = 0.0
 
 def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180
@@ -71,7 +72,7 @@ class ControlNode(Node):
         self.create_subscription(Odometry, '/odom3', self.odom_callback, qos_profile=qos_profile_sensor_data)
         self.create_subscription(Float32MultiArray, '/target', self.command_callback, 10)  # 목표 위치 및 자세 구독
         self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
-        self.pub_arrival_flag = self.create_publisher(Bool, '/mobile/arrival_flag', 10)
+        self.pub_arrival_flag = self.create_publisher(String, '/unity/cmd', 10)
 
         self.timer = self.create_timer(1.0 / Hz, self.timer_callback)
 
@@ -106,7 +107,7 @@ class ControlNode(Node):
             self.CmdPos.x = msg.data[1]
             self.CmdPos.y = msg.data[2]
             self.CmdPos.theta = msg.data[3]
-
+            self.CmdPos.height = msg.data[4]
             self.get_logger().info(f'Target received: Position: {[self.CmdPos.x, self.CmdPos.y]}, Theta: {self.CmdPos.theta}')
             if(math.sqrt((self.CmdPos.x - self.Pos.x) ** 2  + (self.CmdPos.y - self.Pos.y) ** 2) < 0.15):
                 self.state = State.FinalRotate
@@ -223,7 +224,7 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
                 time.sleep(0.5)
-                self.pub_arrival_flag.publish(Bool(data = True))
+                self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)

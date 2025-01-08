@@ -24,7 +24,7 @@ class CommandPositionPublisher(Node):
         self.queue = deque()  # 결과를 저장할 큐
 
 
-    def CreateCommandPositionQueue(self, x1, y1, x2, y2, _D_horizontal, _D_vertical, _D_task):
+    def CreateCommandPositionQueue(self, x1, y1, x2, y2, _D_horizontal, _D_vertical, _D_task, height):
         # (x2 - x1, y2 - y1) 벡터 정의 및 정규화
         move_vector = np.array([x2 - x1, y2 - y1], dtype=float)
         move_vector_mag = np.linalg.norm(move_vector)
@@ -40,16 +40,16 @@ class CommandPositionPublisher(Node):
         theta_degrees = np.degrees(np.arctan2(-direction_vector[1], -direction_vector[0]))
 
         position_queue = deque()
-        position_queue.append((Gear.Differential, new_pos[0], new_pos[1], theta_degrees))
+        position_queue.append((Gear.Differential, new_pos[0], new_pos[1], theta_degrees, height))
 
         for i in range(1, int((move_vector_mag - 2 * _D_horizontal) // _D_task) + 1):
             current_position = new_pos + move_vector_norm * (_D_task * i)
-            position_queue.append((Gear.Lateral, current_position[0], current_position[1], theta_degrees))
+            position_queue.append((Gear.Lateral, current_position[0], current_position[1], theta_degrees, height))
 
         # 마지막 위치 추가 (모듈로 연산으로 인한 위치)
         if (move_vector_mag - 2 * _D_horizontal) % _D_task != 0:
             last_position = new_pos + move_vector_norm * (move_vector_mag - 2 * _D_horizontal)
-            position_queue.append((Gear.Lateral, last_position[0], last_position[1], theta_degrees))
+            position_queue.append((Gear.Lateral, last_position[0], last_position[1], theta_degrees, height))
         
         return position_queue
             
@@ -74,17 +74,18 @@ class CommandPositionPublisher(Node):
 
                     x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
                     self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
-                    self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task))
+                    self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task, h))
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
 
     def bool_callback(self, msg: Bool):
+        self.get_logger().info(f'Publishing: {msg.data}')
         if msg.data:  # True가 들어온 경우
             if self.queue:
                 # 큐에서 하나 꺼내서 퍼블리시
-                gear, x, y, angle = self.queue.popleft()
+                gear, x, y, angle, height = self.queue.popleft()
                 msg = Float32MultiArray()
-                msg.data = [float(gear), x, y, angle]
+                msg.data = [float(gear), x, y, angle, height]
                 self.publisher_.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
         else:
