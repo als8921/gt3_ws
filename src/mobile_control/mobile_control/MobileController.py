@@ -140,6 +140,7 @@ class ControlNode(Node):
                 self.state = State.FinalRotate  # 상태를 FinalRotate으로 변경
                 self.scan_rotate_start_time = None  # 타이머 초기화
                 self.initial_theta = None
+                
             else:
                 self.PublishCtrlCmd(gear=Gear.Differential, angular_speed=12)  # 각속도를 12도로 설정
                 
