@@ -14,6 +14,7 @@ class Gear:
     Neutral = 2
     Differential = 6
     Lateral = 8
+    Rotate = 10
 
 class CommandPositionPublisher(Node):
     def __init__(self):
@@ -57,24 +58,31 @@ class CommandPositionPublisher(Node):
         try:
             # [1, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)],[2, (-2.46, 0.00, -1.52), (-1.73, 0.00, -0.89), (-1.73, 0.52, -0.89)] 형태
             
-            # [1, (-0.55, 0.00, 1.99), (0.96, 0.00, 2.12), (0.96, 0.74, 2.12)],[2, (0.92, 0.00, 0.05), (-0.5, 0.00, 0.03), (0.92, 0.82, 0.05)]
-            if(msg.data[0] == "["):
-                if(msg.data[-1]==","):
-                    msg.data = msg.data[:-1]
-                data_list = msg.data.split("],[")
-                data_list[0] = data_list[0][1:]
-                data_list[-1] = data_list[-1][:-1]
+            # wall;[1, (-0.55, 0.00, 1.99), (0.96, 0.00, 2.12), (0.96, 0.74, 2.12)],[2, (0.92, 0.00, 0.05), (-0.5, 0.00, 0.03), (0.92, 0.82, 0.05)]
+            cmd = msg.data.split(';')
+            if cmd[0] == 'wall':
+                if(cmd[1][0] == "["):
+                    if(cmd[1][-1]==","):
+                        cmd[1] = cmd[1][:-1]
+                    data_list = cmd[1].split("],[")
+                    data_list[0] = data_list[0][1:]
+                    data_list[-1] = data_list[-1][:-1]
 
-                self.queue = deque()
-                for item in data_list:
-                    item = "[" + item + "]"
-                    idx, startpos, endpos, height = eval(item)
-                    index = int(idx)
-                    h = float(height[1])
+                    self.queue = deque()
+                    for item in data_list:
+                        item = "[" + item + "]"
+                        idx, startpos, endpos, height = eval(item)
+                        index = int(idx)
+                        h = float(height[1])
 
-                    x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
-                    self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
-                    self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task, h))
+                        x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
+                        self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
+                        self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task, h))
+            elif cmd[0] == 'scan':
+                self.get_logger().info(cmd[0])
+                msg = Float32MultiArray()
+                msg.data = [float(Gear.Rotate), 0.0, 0.0, 0.0, 0.0]
+                self.publisher_.publish(msg)
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
 
