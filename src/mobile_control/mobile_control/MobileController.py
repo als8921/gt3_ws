@@ -28,6 +28,7 @@ class State(Enum):
     MoveForward = 1
     MoveLateral = 2
     FinalRotate = 3
+    ScanRotate = 4
 
 class Gear:
     Disable = 0
@@ -35,6 +36,7 @@ class Gear:
     Neutral = 2
     Differential = 6
     Lateral = 8
+    Rotate = 10
 
 class Position:
     def __init__(self):
@@ -87,6 +89,7 @@ class ControlNode(Node):
         self.init_odom_state = False
 
         self.lateral_direction = 0
+        self.scan_rotate_start_time = None
 
 
     def odom_callback(self, msg):
@@ -109,10 +112,13 @@ class ControlNode(Node):
             self.CmdPos.theta = msg.data[3]
             self.CmdPos.height = msg.data[4]
             self.get_logger().info(f'Target received: Position: {[self.CmdPos.x, self.CmdPos.y]}, Theta: {self.CmdPos.theta}')
-            if(math.sqrt((self.CmdPos.x - self.Pos.x) ** 2  + (self.CmdPos.y - self.Pos.y) ** 2) < 0.15):
-                self.state = State.FinalRotate
+            if(self.CmdPos.gearSetting == Gear.Rotate):
+                self.state = State.ScanRotate
             else:
-                self.state = State.InitialRotate
+                if(math.sqrt((self.CmdPos.x - self.Pos.x) ** 2  + (self.CmdPos.y - self.Pos.y) ** 2) < 0.15):
+                    self.state = State.FinalRotate
+                else:
+                    self.state = State.InitialRotate
 
     def timer_callback(self):
         if(self.init_odom_state == True):
@@ -120,7 +126,21 @@ class ControlNode(Node):
 
     def control(self):
         if self.state == State.Stop:
-            self.PublishCtrlCmd(0, 0)  # 최종적으로 속도 0으로 설정
+            self.PublishCtrlCmd()
+
+        elif self.state == State.ScanRotate:
+            if self.scan_rotate_start_time is None:
+                self.scan_rotate_start_time = self.get_clock().now().nanoseconds
+                self.CmdPos.theta = self.Pos.theta
+                
+            elapsed_time = (self.get_clock().now().nanoseconds - self.scan_rotate_start_time) / 1e9  # 경과 시간 계산
+            if elapsed_time >= 30:  # 30초가 경과했는지 확인
+                self.state = State.FinalRotate  # 상태를 FinalRotate으로 변경
+                self.scan_rotate_start_time = None  # 타이머 초기화
+                self.initial_theta = None
+            else:
+                self.PublishCtrlCmd(gear=Gear.Differential, angular_speed=12)  # 각속도를 12도로 설정
+                
         elif self.state == State.InitialRotate:
             if(self.CmdPos.gearSetting == Gear.Differential):
                 self.Rotate(RelativeAngle(self.Pos, self.CmdPos))
