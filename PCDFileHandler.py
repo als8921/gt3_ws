@@ -21,7 +21,7 @@ class PCDFileHandler(Node):
 
             pc2_msg = PointCloud2()
             pc2_msg.header = Header()
-            pc2_msg.header.stamp = self.pose_node.get_clock().now().to_msg()
+            pc2_msg.header.stamp = self.get_clock().now().to_msg()
 
             pc2_msg.header.frame_id = 'fastlio2_link'
 
