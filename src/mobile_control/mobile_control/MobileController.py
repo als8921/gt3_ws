@@ -116,6 +116,11 @@ class ControlNode(Node):
                 self.state = State.ScanRotate
                 self.CmdPos.theta = self.Pos.theta
                 self.get_logger().info(f'ScanRotate: ㅁㅇㅁㄴㅇㅁㄴㅇㅁㄴ')
+
+            elif(self.CmdPos.gearSetting == Gear.Disable):
+                self.state == State.Stop
+                self.get_logger().info(f'Mobile_Disable')
+                
             else:
                 if(math.sqrt((self.CmdPos.x - self.Pos.x) ** 2  + (self.CmdPos.y - self.Pos.y) ** 2) < 0.15):
                     self.state = State.FinalRotate
@@ -138,8 +143,6 @@ class ControlNode(Node):
             self.get_logger().info("RotateScan : {elapsed_time}/30.0[s]")
             if elapsed_time >= 30:  # 30초가 경과했는지 확인
                 self.state = State.FinalRotate  # 상태를 FinalRotate으로 변경
-                self.scan_rotate_start_time = None  # 타이머 초기화
-                self.initial_theta = None
                 
             else:
                 self.PublishCtrlCmd(gear=Gear.Differential, angular_speed=12)  # 각속도를 12도로 설정
@@ -247,7 +250,10 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
                 time.sleep(0.5)
-                self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
+                if(self.scan_rotate_start_time != None):    # ScanRotate 모드일 때
+                    self.scan_rotate_start_time = None
+                else:
+                    self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)

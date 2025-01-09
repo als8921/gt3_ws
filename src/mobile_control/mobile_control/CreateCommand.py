@@ -78,10 +78,18 @@ class CommandPositionPublisher(Node):
                         x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
                         self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
                         self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task, h))
+
             elif cmd[0] == 'scan_start':
                 self.get_logger().info(cmd[0])
                 msg = Float32MultiArray()
                 msg.data = [float(Gear.Rotate), 0.0, 0.0, 0.0, 0.0]
+                self.publisher_.publish(msg)
+
+            elif cmd[0] == 'mobile_emergency':
+                self.get_logger().info(cmd[0])
+                self.queue = deque()
+                msg = Float32MultiArray()
+                msg.data = [float(Gear.Disable), 0.0, 0.0, 0.0, 0.0]
                 self.publisher_.publish(msg)
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
