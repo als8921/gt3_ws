@@ -28,7 +28,6 @@ class RS485Communication:
                 response.extend(self.ser.read(4))
                 additional_read = response[-1] + 1
                 response.extend(self.ser.read(additional_read))
-                print(*response)
                 if response[3] == 197:
                     self.lift_position = md400.bytes_to_pos(response)
                 else:
@@ -48,12 +47,10 @@ class RS485Communication:
         while True:
             if self.command_queue:
                 packet = self.command_queue.popleft()
-                print("send : ", *packet)
                 self.send_data(packet)
                 self.read_data()
             else:
                 packet = md400.get_pos()
-                print("send : ", *packet)
                 self.send_data(packet)
                 self.read_data()
                 time.sleep(0.05)
@@ -66,7 +63,7 @@ class LiftServiceServer(Node):
         super().__init__('lift_service_server')
         self.rs485_comm = rs485_comm
         self.srv = self.create_service(LiftCommand, 'lift_command', self.service_callback)
-        print('lift Service init**')
+        self.get_logger().info('lift Service init**')
 
     def service_callback(self, request, response):
         print(request.command, request.value)
@@ -83,17 +80,17 @@ class LiftServiceServer(Node):
         elif request.command == "STOP":
             self.rs485_comm.command_queue = deque()
             self.rs485_comm.command_queue.append(md400.stop())
-            self.get_logger().info('STOP')
+            self.get_logger().info('LIFT STOP')
             response.status = True
 
         elif request.command == "RESET":
             self.rs485_comm.command_queue.append(md400.set_alarm_reset())
-            self.get_logger().info('ALARM RESET')
+            self.get_logger().info('LIFT RESET')
             response.status = True
 
         elif request.command == "HOMING":
             self.rs485_comm.command_queue.append(md400.homing())
-            self.get_logger().info('HOMING')
+            self.get_logger().info('LIFT HOMING')
             response.status = True
 
         elif request.command == "SETRPM":
