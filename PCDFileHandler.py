@@ -43,8 +43,9 @@ class PCDFileHandler(Node):
     def listener_callback(self, msg):
         """메시지를 수신하면 파일 삭제 및 새로운 파일 확인."""
         if msg.data == "scan":
+            self.scan_started = False
             self.delete_pcd_files()
-            self.check_for_new_files(30)
+            self.check_for_new_files(31)
 
     def delete_pcd_files(self):
         """지정된 디렉토리의 모든 .pcd 파일을 삭제."""
@@ -86,15 +87,13 @@ class PCDFileHandler(Node):
         collected_files = glob.glob(os.path.join(self.directory, '*.pcd'))
         numbers = self.extract_numbers_from_filenames(collected_files)
         numbers = numbers[1:]
-        self.get_logger().info(f'Extracted numbers: {numbers}')
 
         for number in numbers:
             file_name = f'/home/gt3-3/fastlio/src/FAST_LIO/PCD/scans_{number}.pcd'
-            print(file_name)
+            self.get_logger().info(file_name)
             pc = PointCloud.from_path(file_name)
 
             arrar = pc.numpy(("x", "y", "z", "intensity"))
-            print(pc.fields)
             length = len(arrar)
             for i in range(length // 10000):
                 self.map_publish(arrar[i * 10000:i*10000+10000])   #(i + 1) * 1000])

@@ -34,14 +34,13 @@ class RS485Communication:
                     self.lift_position = None
                 
                 if self.lift_position is not None:
-                    print(self.lift_position)
                     self.position_publisher.publish(Float32(data=float(self.lift_position)))
 
     def send_data(self, data):
         try:
             self.ser.write(data)
         except Exception as e:
-            print(f"Error sending data: {e}")
+            self.get_logger().info(f"Error sending data: {e}")
 
     def run(self):
         while True:
@@ -66,7 +65,7 @@ class LiftServiceServer(Node):
         self.get_logger().info('lift Service init**')
 
     def service_callback(self, request, response):
-        print(request.command, request.value)
+        self.get_logger().info(f'{request.command}, {request.value}')
         response.status = False
         if request.command == "MOVE":
             self.get_logger().info(f'Setting position to: {request.value}')
