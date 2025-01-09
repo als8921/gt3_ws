@@ -34,7 +34,6 @@ class RS485Communication:
                     self.lift_position = None
                 
                 if self.lift_position is not None:
-                    print(self.lift_position)
                     self.position_publisher.publish(Float32(data=float(self.lift_position)))
 
     def send_data(self, data):
