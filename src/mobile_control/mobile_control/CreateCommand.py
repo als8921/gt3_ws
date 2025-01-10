@@ -25,9 +25,11 @@ class Gear:
 class CommandPositionPublisher(Node):
     def __init__(self):
         super().__init__('command_position_node')
-        self.publisher_ = self.create_publisher(Float32MultiArray, '/target', 10)
-        self.bool_subscriber = self.create_subscription(Bool, '/mobile/move_flag', self.bool_callback, 10)
-        self.string_subscriber = self.create_subscription(String, 'unity/cmd', self.string_callback, 10)
+        self.target_pub = self.create_publisher(Float32MultiArray, '/target', 10)
+        self.unity_cmd_pub = self.create_publisher(String, 'unity/cmd', 10)
+
+        self.move_flag_sub = self.create_subscription(Bool, '/mobile/move_flag', self.bool_callback, 10)
+        self.unity_cmd_sub = self.create_subscription(String, 'unity/cmd', self.string_callback, 10)
         self.queue = deque()  # 결과를 저장할 큐
 
 
@@ -89,14 +91,26 @@ class CommandPositionPublisher(Node):
                 self.get_logger().info(cmd[0])
                 msg = Float32MultiArray()
                 msg.data = [float(Gear.Rotate), 0.0, 0.0, 0.0, 0.0]
-                self.publisher_.publish(msg)
+                self.target_pub.publish(msg)
 
             elif cmd[0] == 'mobile_emergency':
                 self.get_logger().info(cmd[0])
                 self.queue = deque()
                 msg = Float32MultiArray()
                 msg.data = [float(Gear.Disable), 0.0, 0.0, 0.0, 0.0]
-                self.publisher_.publish(msg)
+                self.target_pub.publish(msg)
+
+            elif cmd[0] == 'changed_mobile_setting':
+                mobile_setting = eval(cmd[1])
+                D_horizontal = float(mobile_setting[0])
+                D_vertical = float(mobile_setting[1])
+                D_task = float(mobile_setting[2])
+
+                SettingJson.update_setting("mobile", "horizontal_distance", D_horizontal)    # [m] 작업 위치 수평 거리
+                SettingJson.update_setting("mobile", "verticle_distance", D_vertical)        # [m] 작업 위치 수직 거리   
+                SettingJson.update_setting("mobile", "task_distance", D_task)                # [m] 작업 사이의 거리
+
+
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
 
@@ -108,7 +122,7 @@ class CommandPositionPublisher(Node):
                 gear, x, y, angle, height = self.queue.popleft()
                 msg = Float32MultiArray()
                 msg.data = [float(gear), x, y, angle, height]
-                self.publisher_.publish(msg)
+                self.target_pub.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
         else:
             self.queue = deque()
