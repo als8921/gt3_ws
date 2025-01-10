@@ -1,7 +1,8 @@
 import json
 import os
 
-json_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../settings.json'))
+# 절대 경로로 JSON 파일 경로 설정
+json_file_path = "/home/gt3-3/config/settings.json"
 
 def update_setting(setting_name, key, value):
     """지정된 설정의 키를 새로운 값으로 업데이트합니다.
@@ -37,31 +38,35 @@ def load_settings():
         FileNotFoundError: JSON 파일이 존재하지 않을 경우.
     """
     if not os.path.exists(json_file_path):
-        raise FileNotFoundError("파일이 존재하지 않습니다.")
+        raise FileNotFoundError(f"파일이 존재하지 않습니다: {json_file_path}")
     
     with open(json_file_path, 'r') as json_file:
         data = json.load(json_file)
     
     return data
 
-def load_setting(key, value):
+def load_setting(setting_name, key):
     """설정에서 특정 키에 대한 값을 로드합니다.
 
     Args:
-        key (str): 설정에서 찾을 키.
-        value (str): 검색할 특정 값.
+        setting_name (str): 설정 이름.
+        key (str): 키.
 
     Returns:
-        키와 관련된 값을 반환합니다.
+        설정된 값을 반환합니다.
 
     Raises:
-        KeyError: 키가 존재하지 않을 경우.
+        KeyError: 설정이나 키가 존재하지 않을 경우.
         FileNotFoundError: JSON 파일이 존재하지 않을 경우.
     """
-    if not os.path.exists(json_file_path):
-        raise FileNotFoundError("파일이 존재하지 않습니다.")
-    
-    with open(json_file_path, 'r') as json_file:
-        data = json.load(json_file)
-    
-    return data[key][value]
+    data = load_settings()
+
+    if setting_name not in data:
+        raise KeyError(f"설정 '{setting_name}'이(가) 존재하지 않습니다.")
+
+    if key not in data[setting_name]:
+        raise KeyError(f"키 '{key}'가 설정 '{setting_name}'에 존재하지 않습니다.")
+
+    return data[setting_name][key]
+
+print(load_settings())
