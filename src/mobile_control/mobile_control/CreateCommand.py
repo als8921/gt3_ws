@@ -110,6 +110,10 @@ class CommandPositionPublisher(Node):
                 SettingJson.update_setting("mobile", "verticle_distance", D_vertical)        # [m] 작업 위치 수직 거리   
                 SettingJson.update_setting("mobile", "task_distance", D_task)                # [m] 작업 사이의 거리
 
+            elif cmd[0] == 'request_mobile_setting':
+                data = f"saved_mobile_setting;[{D_horizontal},{D_vertical},{D_task}]"
+                self.unity_cmd_pub.publish(String(data = data))
+
 
         except ValueError:
             self.get_logger().error('Invalid input format. Expected format: "x1,y1,x2,y2"')
