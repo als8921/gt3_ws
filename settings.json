@@ -1,11 +1,11 @@
 {
     "paint": {
-        "height": 0,
+        "height": 0.1,
         "width": 0
     },
     "mobile": {
+        "horizontal_distance": 2.0,
         "verticle_distance": 0,
-        "horizontal_distance": 0,
-        "task_distance": 0
+        "task_distance": 0.6
     }
 }

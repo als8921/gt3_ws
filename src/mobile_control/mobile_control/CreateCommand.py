@@ -4,9 +4,18 @@ from std_msgs.msg import Float32MultiArray, Bool, String
 from collections import deque
 import numpy as np
 
-D_horizontal = 0  # [m] 작업 위치 수평 거리
-D_vertical = 2.0   # [m] 작업 위치 수직 거리   
-D_task = 0.6       # [m] 작업 사이의 거리
+import sys
+import os
+
+# utils 디렉토리를 모듈 검색 경로에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+import setting_json.SettingJson as SettingJson
+
+D_horizontal = SettingJson.load_setting("mobile", "horizontal_distance")    # [m] 작업 위치 수평 거리
+D_vertical = SettingJson.load_setting("mobile", "verticle_distance")        # [m] 작업 위치 수직 거리   
+D_task = SettingJson.load_setting("mobile", "task_distance")                # [m] 작업 사이의 거리
+
+print(D_horizontal + D_vertical + D_task)
 
 class Gear:
     Disable = 0

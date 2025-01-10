@@ -1,7 +1,7 @@
 import json
 import os
 
-json_file_path = '/home/lmc/gt3_ws/settings.json'
+json_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../settings.json'))
 
 def update_setting(setting_name, key, value):
     """지정된 설정의 키를 새로운 값으로 업데이트합니다.
@@ -65,9 +65,3 @@ def load_setting(key, value):
         data = json.load(json_file)
     
     return data[key][value]
-
-if __name__ == "__main__":
-    print(load_settings())
-    print(load_setting("paint", "height"))
-    update_setting("paint", "height", 0.1)
-    print(load_setting("paint", "height"))
