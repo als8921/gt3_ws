@@ -69,4 +69,3 @@ def load_setting(setting_name, key):
 
     return data[setting_name][key]
 
-print(load_settings())

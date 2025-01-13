@@ -29,6 +29,7 @@ class CommandPositionPublisher(Node):
         self.bool_subscriber = self.create_subscription(Bool, '/mobile/move_flag', self.bool_callback, 10)
         self.string_subscriber = self.create_subscription(String, 'unity/cmd', self.string_callback, 10)
         self.queue = deque()  # 결과를 저장할 큐
+        self.get_logger().info(f"D_horizontal : {D_horizontal} \n D_vertical : {D_vertical} \n D_task : {D_task}")
 
 
     def CreateCommandPositionQueue(self, x1, y1, x2, y2, _D_horizontal, _D_vertical, _D_task, height):
