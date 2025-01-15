@@ -49,6 +49,7 @@ class Command(Position):
         super().__init__()
         self.gearSetting = Gear.Differential
         self.height = 0.0
+        self.paintMode = False
 
 def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180
@@ -75,6 +76,7 @@ class ControlNode(Node):
         self.create_subscription(Float32MultiArray, '/target', self.command_callback, 10)  # 목표 위치 및 자세 구독
         self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
         self.pub_arrival_flag = self.create_publisher(String, '/unity/cmd', 10)
+        self.mobile_move_pub = self.create_publisher(Bool, '/mobile/move_flag', 10)
 
         self.timer = self.create_timer(1.0 / Hz, self.timer_callback)
 
@@ -105,12 +107,13 @@ class ControlNode(Node):
 
     def command_callback(self, msg):
         # 목표 위치 및 자세 업데이트
-        if len(msg.data) >= 4:
+        if len(msg.data) >= 5:
             self.CmdPos.gearSetting = msg.data[0]
             self.CmdPos.x = msg.data[1]
             self.CmdPos.y = msg.data[2]
             self.CmdPos.theta = msg.data[3]
             self.CmdPos.height = msg.data[4]
+            self.CmdPos.paintMode = True if msg.data[5] == 1 else False
             self.get_logger().info(f'Target received: Position: {[self.CmdPos.x, self.CmdPos.y]}, Theta: {self.CmdPos.theta}')
             if(self.CmdPos.gearSetting == Gear.Rotate):
                 self.state = State.ScanRotate
@@ -251,10 +254,10 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
                 time.sleep(0.5)
-                if(self.scan_rotate_start_time != None):    # ScanRotate 모드일 때
-                    self.scan_rotate_start_time = None
-                else:
+                if(self.CmdPos.paintMode):
                     self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
+                else:
+                    self.mobile_move_pub.publish(Bool(data = True))
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
