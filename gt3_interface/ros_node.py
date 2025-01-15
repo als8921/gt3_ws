@@ -2,7 +2,7 @@ import rclpy
 import numpy as np
 from rclpy.node import Node
 from std_msgs.msg import Bool
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, LaserScan
 from nav_msgs.msg import Odometry
 
 import tf2_ros
@@ -19,13 +19,19 @@ class ROSNode(Node):
         self.mobile_arrival_sub = self.create_subscription(Bool, '/mobile/arrival_flag', self.mobile_arrived_callback, 10)
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
-        
+        self.rear_scan_sub = self.create_subscription(LaserScan, '/rear_scan', self.rear_scan_callback, 10)
+        self.front_scan_sub = self.create_subscription(LaserScan, '/front_scan', self.front_scan_callback, 10)
+
         self.points = []
         self.rgb_array = []
         self.odom_pos = [0, 0, 0, 0, 0, 0]          # [x, y, z, roll, pitch, yaw]
         self.end_effector_pos = [0, 0, 0, 0, 0, 0]  # [x, y, z, roll, pitch, yaw]
 
         self.isArrived = False
+
+        # LaserScan 데이터 저장
+        self.rear_scan = None
+        self.front_scan = None
 
     def mobile_arrived_callback(self, msg):
         self.isArrived = msg.data
@@ -59,6 +65,12 @@ class ROSNode(Node):
         self.rgb_array = rgb_array
         self.end_effector_pos = self.calculate_end_effector_position()
 
+    def rear_scan_callback(self, msg):
+        self.rear_scan = msg
+
+    def front_scan_callback(self, msg):
+        self.front_scan = msg
+
     def calculate_end_effector_position(self):
         try:
             target_frame = "tcp_camera_link"
@@ -72,7 +84,6 @@ class ROSNode(Node):
             print(f"{source_frame} 에서 {target_frame} 까지의 TF를 불러올 수 없음.")
             x, y, z, r, p, yaw = 0, 0, 0, 0, 0, 0
 
-        # print(x, y, z, np.degrees([r, p, yaw]))
         # 로봇의 현재 위치
         robot_x, robot_y, robot_z, robot_r, robot_p, robot_yaw = self.odom_pos
 
