@@ -8,10 +8,10 @@ from mpl_toolkits.mplot3d import Axes3D
 from ros_node import ROSNode
 import rclpy
 from PyQt5 import uic, QtCore
-import pcl_clustering
-import pcl_normal_vector
-import pcl_correction
-import pcl_transformation
+import pcl_visualization.pcl_clustering as pcl_clustering
+import pcl_visualization.pcl_normal_vector as pcl_normal_vector
+import pcl_visualization.pcl_correction as pcl_correction
+import pcl_visualization.pcl_transformation as pcl_transformation
 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
