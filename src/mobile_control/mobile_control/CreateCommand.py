@@ -10,10 +10,6 @@ import os
 sys.path.append(os.path.dirname(__file__))
 import SettingJson
 
-D_horizontal = SettingJson.load_setting("mobile", "horizontal_distance")    # [m] 작업 위치 수평 거리
-D_vertical = SettingJson.load_setting("mobile", "verticle_distance")        # [m] 작업 위치 수직 거리   
-D_task = SettingJson.load_setting("mobile", "task_distance")                # [m] 작업 사이의 거리
-
 class Gear:
     Disable = 0
     Parking = 1
@@ -25,13 +21,18 @@ class Gear:
 class CommandPositionPublisher(Node):
     def __init__(self):
         super().__init__('command_position_node')
+
+        self.D_horizontal = SettingJson.load_setting("mobile", "horizontal_distance")    # [m] 작업 위치 수평 거리
+        self.D_vertical = SettingJson.load_setting("mobile", "verticle_distance")        # [m] 작업 위치 수직 거리   
+        self.D_task = SettingJson.load_setting("mobile", "task_distance")                # [m] 작업 사이의 거리
+
         self.target_pub = self.create_publisher(Float32MultiArray, '/target', 10)
         self.unity_cmd_pub = self.create_publisher(String, 'unity/cmd', 10)
 
         self.move_flag_sub = self.create_subscription(Bool, '/mobile/move_flag', self.bool_callback, 10)
         self.unity_cmd_sub = self.create_subscription(String, 'unity/cmd', self.string_callback, 10)
         self.queue = deque()  # 결과를 저장할 큐
-        self.get_logger().info(f"D_horizontal : {D_horizontal} \n D_vertical : {D_vertical} \n D_task : {D_task}")
+        self.get_logger().info(f"self.D_horizontal : {self.D_horizontal} \n self.D_vertical : {self.D_vertical} \n self.D_task : {self.D_task}")
 
 
     def CreateCommandPositionQueue(self, x1, y1, x2, y2, _D_horizontal, _D_vertical, _D_task, height):
@@ -50,7 +51,9 @@ class CommandPositionPublisher(Node):
         theta_degrees = np.degrees(np.arctan2(-direction_vector[1], -direction_vector[0]))
 
         position_queue = deque()
-        position_queue.append((Gear.Differential, new_pos[0], new_pos[1], theta_degrees, height))
+
+        position_queue.append((Gear.Differential, new_pos[0] + move_vector_norm[0] * _D_task, new_pos[1] + move_vector_norm[1] * _D_task, theta_degrees, height))
+        position_queue.append((Gear.Lateral, new_pos[0], new_pos[1], theta_degrees, height))
 
         for i in range(1, int((move_vector_mag - 2 * _D_horizontal) // _D_task) + 1):
             current_position = new_pos + move_vector_norm * (_D_task * i)
@@ -60,7 +63,8 @@ class CommandPositionPublisher(Node):
         if (move_vector_mag - 2 * _D_horizontal) % _D_task != 0:
             last_position = new_pos + move_vector_norm * (move_vector_mag - 2 * _D_horizontal)
             position_queue.append((Gear.Lateral, last_position[0], last_position[1], theta_degrees, height))
-        
+            position_queue.append((Gear.Lateral, last_position[0] - move_vector_norm[0] * _D_task, last_position[1] - move_vector_norm[1] * _D_task, theta_degrees, height))
+
         return position_queue
             
     def string_callback(self, msg):
@@ -86,7 +90,7 @@ class CommandPositionPublisher(Node):
 
                         x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
                         self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
-                        self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, D_horizontal, D_vertical, D_task, h))
+                        self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, self.D_horizontal, self.D_vertical, self.D_task, h))
 
             elif cmd[0] == 'scan_start':
                 self.get_logger().info(cmd[0])
@@ -103,16 +107,16 @@ class CommandPositionPublisher(Node):
 
             elif cmd[0] == 'changed_mobile_setting':
                 mobile_setting = eval(cmd[1])
-                D_horizontal = float(mobile_setting[0])
-                D_vertical = float(mobile_setting[1])
-                D_task = float(mobile_setting[2])
+                self.D_horizontal = float(mobile_setting[0])
+                self.D_vertical = float(mobile_setting[1])
+                self.D_task = float(mobile_setting[2])
 
-                SettingJson.update_setting("mobile", "horizontal_distance", D_horizontal)    # [m] 작업 위치 수평 거리
-                SettingJson.update_setting("mobile", "verticle_distance", D_vertical)        # [m] 작업 위치 수직 거리   
-                SettingJson.update_setting("mobile", "task_distance", D_task)                # [m] 작업 사이의 거리
+                SettingJson.update_setting("mobile", "horizontal_distance", self.D_horizontal)    # [m] 작업 위치 수평 거리
+                SettingJson.update_setting("mobile", "verticle_distance", self.D_vertical)        # [m] 작업 위치 수직 거리   
+                SettingJson.update_setting("mobile", "task_distance", self.D_task)                # [m] 작업 사이의 거리
 
             elif cmd[0] == 'request_mobile_setting':
-                data = f"saved_mobile_setting;[{D_horizontal},{D_vertical},{D_task}]"
+                data = f"saved_mobile_setting;[{self.D_horizontal},{self.D_vertical},{self.D_task}]"
                 self.unity_cmd_pub.publish(String(data = data))
 
 
