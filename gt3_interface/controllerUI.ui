@@ -68,6 +68,27 @@
       </property>
      </widget>
     </widget>
+    <widget class="QWidget" name="tab_5">
+     <attribute name="title">
+      <string>Scan</string>
+     </attribute>
+     <widget class="QFrame" name="scan_frame">
+      <property name="geometry">
+       <rect>
+        <x>-1</x>
+        <y>-1</y>
+        <width>1001</width>
+        <height>971</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+     </widget>
+    </widget>
    </widget>
    <widget class="QPushButton" name="loadButton">
     <property name="geometry">

@@ -8,6 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from ros_node import ROSNode
 import rclpy
 from PyQt5 import uic, QtCore
+from PyQt5.QtCore import QTimer
 import PCL.pcl_clustering as pcl_clustering
 import PCL.pcl_normal_vector as pcl_normal_vector
 import PCL.pcl_correction as pcl_correction
@@ -23,31 +24,34 @@ class QtController(QMainWindow):
         super().__init__()
         self.init_ui()
 
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+
         # ROS 2 노드를 별도의 스레드에서 실행
         self.ros_thread = threading.Thread(target=self.run_ros_node)
         self.ros_thread.start()
 
-        # 초기 점 리스트
         self.points = []
-        
-        # 축 이동 오프셋 초기화
-        self.x_offset = 0
-        self.y_offset = 0
-        self.z_offset = 0
 
-        # Matplotlib Figure 및 Canvas 설정
         self.figure3D = plt.figure()
         self.canvas3D = FigureCanvas(self.figure3D)
         self.layout3D = QVBoxLayout(self.frame)
         self.layout3D.addWidget(self.canvas3D)
 
-        # 2D 플롯의 Figure 및 Canvas 초기화
         self.figure2D = plt.figure()
         self.canvas2D = FigureCanvas(self.figure2D)
         self.layout2D = QVBoxLayout(self.frame_2)
         self.layout2D.addWidget(self.canvas2D)
 
+        self.figureLaserScan = plt.figure()
+        self.canvasLaserScan = FigureCanvas(self.figureLaserScan)
+        self.layoutLaserScan = QVBoxLayout(self.scan_frame)
+        self.layoutLaserScan.addWidget(self.canvasLaserScan)
+
         self.plot_points()
+        self.timer.start(50)    # 50ms 마다 timer 실행
+        self.i = 0
+        self.active_tab = 0
 
     def init_ui(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -55,11 +59,34 @@ class QtController(QMainWindow):
         uic.loadUi(ui_file, self)
         self.eps_lineEdit.setText('0.2')
 
+        self.tabWidget.currentChanged.connect(self.on_tab_change)
+
         self.loadButton.clicked.connect(self.btn_load_pointcloud_ros)
         self.loadTxtButton.clicked.connect(self.btn_load_pointcloud_file)
         self.saveButton.clicked.connect(self.btn_save_pointcloud_file)
         self.resetButton.clicked.connect(self.btn_reset_plot)
         self.quitButton.clicked.connect(self.btn_quit)
+
+    def on_tab_change(self, index):
+        self.active_tab = index
+
+    def update_frame(self):
+        if(self.active_tab == 2):
+            self.figureLaserScan.clear()
+            
+            axLaserScan = self.figureLaserScan.add_subplot(111)
+            
+            x_data = np.linspace(0, 2 * np.pi, 100)
+            y_data = np.sin(x_data + self.i)
+            
+            axLaserScan.plot(x_data, y_data)
+            
+            axLaserScan.set_xlabel('X-axis')
+            axLaserScan.set_ylabel('Y-axis')
+            
+            self.i += 0.1
+            
+            self.canvasLaserScan.draw()
 
     def btn_load_pointcloud_ros(self): # ROS Pointcloud2 데이터 불러오기
         self.points.extend(self.ros_node.points)
@@ -90,9 +117,6 @@ class QtController(QMainWindow):
     def btn_reset_plot(self): # 현재 Pointcloud 초기화
         # 점 리스트 초기화
         self.points = []
-        self.x_offset = 0
-        self.y_offset = 0
-        self.z_offset = 0
         self.plot_points()
 
     def btn_quit(self): # 프로그램 종료
