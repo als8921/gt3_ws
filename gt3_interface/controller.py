@@ -8,13 +8,15 @@ from mpl_toolkits.mplot3d import Axes3D
 from ros_node import ROSNode
 import rclpy
 from PyQt5 import uic, QtCore
-import pcl_visualization.pcl_clustering as pcl_clustering
-import pcl_visualization.pcl_normal_vector as pcl_normal_vector
-import pcl_visualization.pcl_correction as pcl_correction
-import pcl_visualization.pcl_transformation as pcl_transformation
+import PCL.pcl_clustering as pcl_clustering
+import PCL.pcl_normal_vector as pcl_normal_vector
+import PCL.pcl_correction as pcl_correction
+import PCL.pcl_transformation as pcl_transformation
 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
+
+import os, sys
 
 class QtController(QMainWindow):
     def __init__(self):
@@ -48,7 +50,9 @@ class QtController(QMainWindow):
         self.plot_points()
 
     def init_ui(self):
-        uic.loadUi('pcl.ui', self)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        ui_file = os.path.join(current_dir, 'controllerUI.ui')
+        uic.loadUi(ui_file, self)
         self.eps_lineEdit.setText('0.2')
 
         self.loadButton.clicked.connect(self.btn_load_pointcloud_ros)
