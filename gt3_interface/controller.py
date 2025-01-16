@@ -14,6 +14,8 @@ import PCL.pcl_normal_vector as pcl_normal_vector
 import PCL.pcl_correction as pcl_correction
 import PCL.pcl_transformation as pcl_transformation
 
+import LaserScan.laserscan_transformation as laserscan_transformation
+
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
@@ -75,18 +77,22 @@ class QtController(QMainWindow):
             self.figureLaserScan.clear()
             
             axLaserScan = self.figureLaserScan.add_subplot(111)
-            
-            x_data = np.linspace(0, 2 * np.pi, 100)
-            y_data = np.sin(x_data + self.i)
-            
-            axLaserScan.plot(x_data, y_data)
-            
-            axLaserScan.set_xlabel('X-axis')
-            axLaserScan.set_ylabel('Y-axis')
-            
-            self.i += 0.1
-            
-            self.canvasLaserScan.draw()
+            if(self.ros_node.front_scan and self.ros_node.rear_scan):
+                front_data, rear_data = laserscan_transformation.laser_scan_to_xy(self.ros_node.front_scan, self.ros_node.rear_scan, 0.3, 0.25)
+                plotRange = 5
+                axLaserScan.axis([-plotRange, plotRange, -plotRange, plotRange])
+                axLaserScan.plot(0, 0, 's', color = 'black')
+                axLaserScan.scatter(front_data[1], front_data[0], s = 0.5)
+                axLaserScan.scatter(rear_data[1], rear_data[0], s = 0.5, c = 'g')
+                axLaserScan.invert_xaxis()
+                axLaserScan.grid(True)
+                
+                axLaserScan.set_xlabel('Y')
+                axLaserScan.set_ylabel('X')
+                
+                self.i += 0.1
+                
+                self.canvasLaserScan.draw()
 
     def btn_load_pointcloud_ros(self): # ROS Pointcloud2 데이터 불러오기
         self.points.extend(self.ros_node.points)
