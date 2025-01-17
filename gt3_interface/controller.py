@@ -52,7 +52,6 @@ class QtController(QMainWindow):
 
         self.plot_points()
         self.timer.start(50)    # 50ms 마다 timer 실행
-        self.i = 0
         self.active_tab = 0
 
     def init_ui(self):
@@ -89,8 +88,6 @@ class QtController(QMainWindow):
                 
                 axLaserScan.set_xlabel('Y')
                 axLaserScan.set_ylabel('X')
-                
-                self.i += 0.1
                 
                 self.canvasLaserScan.draw()
 
