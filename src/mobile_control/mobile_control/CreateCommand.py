@@ -76,23 +76,17 @@ class CommandPositionPublisher(Node):
             # wall;[1, (-0.55, 0.00, 1.99), (0.96, 0.00, 2.12), (0.96, 0.74, 2.12)],[2, (0.92, 0.00, 0.05), (-0.5, 0.00, 0.03), (0.92, 0.82, 0.05)]
             cmd = msg.data.split(';')
             if cmd[0] == 'wall':
-                if(cmd[1][0] == "["):
-                    if(cmd[1][-1]==","):
-                        cmd[1] = cmd[1][:-1]
-                    data_list = cmd[1].split("],[")
-                    data_list[0] = data_list[0][1:]
-                    data_list[-1] = data_list[-1][:-1]
 
-                    self.queue = deque()
-                    for item in data_list:
-                        item = "[" + item + "]"
-                        idx, startpos, endpos, height = eval(item)
-                        index = int(idx)
-                        h = float(height[1])
+                data_list = eval("[" + cmd[1] + "]")
 
-                        x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
-                        self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
-                        self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, self.D_horizontal, self.D_vertical, self.D_task, h))
+                self.queue = deque()
+                for idx, startpos, endpos, height in data_list:
+                    index = int(idx)
+                    h = float(height[1])
+
+                    x1, y1, x2, y2 = float(startpos[2]), -float(startpos[0]), float(endpos[2]), -float(endpos[0])
+                    self.get_logger().info(f"{index} : {x1}, {y1}, {x2}, {y2}")
+                    self.queue.extend(self.CreateCommandPositionQueue(x1, y1, x2, y2, self.D_horizontal, self.D_vertical, self.D_task, h))
 
             elif cmd[0] == 'scan_start':
                 self.get_logger().info(cmd[0])
@@ -132,7 +126,7 @@ class CommandPositionPublisher(Node):
                 # 큐에서 하나 꺼내서 퍼블리시
                 gear, x, y, angle, height, paintmode = self.queue.popleft()
                 msg = Float32MultiArray()
-                msg.data = [float(gear), x, y, angle, height, paintmode]
+                msg.data = [float(gear), x, y, angle, height, float(paintmode)]
                 self.target_pub.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
         else:
