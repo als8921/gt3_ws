@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
-def clustering_pointcloud(pointcloud, _eps):
+def clustering_pointcloud(pointcloud, _eps, width = 43, height = 24):
     """
     주어진 점군에 대해 DBSCAN 클러스터링을 수행하고, 
     엔드 이펙터 위치에 가장 가까운 클러스터를 찾습니다.
@@ -61,7 +61,6 @@ def clustering_pointcloud(pointcloud, _eps):
     # closest_cluster_data의 인덱스 찾기 (원래 인덱스 기반)
     closest_index = [original_indices[i] for i in np.where(labels == closest_cluster_label)[0].tolist()]
 
-    width, height = 43, 24
     image = np.ones((height, width, 3))
     if len(pointcloud) <= 1032:
         for index in closest_index:
@@ -71,7 +70,7 @@ def clustering_pointcloud(pointcloud, _eps):
 
     return closest_cluster_data.tolist(), remaining_data.tolist(), closest_index, image
 
-def structed_cluster(closest, closest_idx):
+def structed_cluster(closest, closest_idx, width = 43, height = 24):
     """
     가장 가까운 클러스터의 점(x, y, z) 데이터를 생성합니다.
 
@@ -85,7 +84,6 @@ def structed_cluster(closest, closest_idx):
     if(not closest):
         return np.array([])
     
-    width, height = 43, 24
     min_x, max_x = width, -1
     min_y, max_y = height, -1
     for idx in closest_idx:
