@@ -25,7 +25,8 @@ setup(
         'console_scripts': [
             "control = mobile_control.MobileController:main",
             "calculate_angle = mobile_control.CreateCommand:main",
-            "scan = mobile_control.PCDFileHandler:main"
+            "scan = mobile_control.PCDFileHandler:main",
+            "battery = mobile_control.BatteryCheck:main"
         ],
     },
 )

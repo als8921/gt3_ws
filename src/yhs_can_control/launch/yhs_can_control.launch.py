@@ -26,9 +26,11 @@ def generate_launch_description():
                                 output='screen',
                                 parameters=[parameter_file]
                                 )
+    battery_pub_node = Node(package="mobile_control", executable="battery")
 
     return LaunchDescription([
         params_declare,
-        yhs_can_control_node
+        yhs_can_control_node,
+        battery_pub_node
     ])
 
