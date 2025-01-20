@@ -130,9 +130,9 @@ class CommandPositionPublisher(Node):
         if msg.data:  # True가 들어온 경우
             if self.queue:
                 # 큐에서 하나 꺼내서 퍼블리시
-                gear, x, y, angle, height = self.queue.popleft()
+                gear, x, y, angle, height, paintmode = self.queue.popleft()
                 msg = Float32MultiArray()
-                msg.data = [float(gear), x, y, angle, height]
+                msg.data = [float(gear), x, y, angle, height, paintmode]
                 self.target_pub.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
         else:
