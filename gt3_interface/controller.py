@@ -15,6 +15,7 @@ import PCL.pcl_correction as pcl_correction
 import PCL.pcl_transformation as pcl_transformation
 
 import LaserScan.laserscan_transformation as laserscan_transformation
+import LaserScan.laserscan_clustering as laserscan_clustering
 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -51,7 +52,7 @@ class QtController(QMainWindow):
         self.layoutLaserScan.addWidget(self.canvasLaserScan)
 
         self.plot_points()
-        self.timer.start(50)    # 50ms 마다 timer 실행
+        self.timer.start(10)    # 50ms 마다 timer 실행
         self.active_tab = 0
 
     def init_ui(self):
@@ -78,11 +79,29 @@ class QtController(QMainWindow):
             axLaserScan = self.figureLaserScan.add_subplot(111)
             if(self.ros_node.front_scan and self.ros_node.rear_scan):
                 front_data, rear_data = laserscan_transformation.laser_scan_to_xy(self.ros_node.front_scan, self.ros_node.rear_scan, 0.3, 0.25)
+
+                front_cluster = laserscan_clustering.clustering(*front_data, 0.1, 4)
+                rear_cluster = laserscan_clustering.clustering(*rear_data, 0.1, 4)
+
+                colors = plt.cm.viridis(np.linspace(0, 1, len(front_cluster)))
+                for idx, [x, y] in enumerate(front_cluster):
+                    if(idx == 0):
+                        axLaserScan.scatter(y, x, s = 5, c = 'r')
+                    else:
+                        color = colors[idx]
+                        axLaserScan.scatter(y, x, s = 0.5, c = [color], alpha= 0.5)
+
+                colors = plt.cm.viridis(np.linspace(0, 1, len(rear_cluster)))
+                for idx, [x, y] in enumerate(rear_cluster):
+                    if(idx == 0):
+                        axLaserScan.scatter(y, x, s = 5, c = 'r')
+                    else:
+                        color = colors[idx]
+                        axLaserScan.scatter(y, x, s = 0.5, c = [color], alpha= 0.5)
+
                 plotRange = 5
                 axLaserScan.axis([-plotRange, plotRange, -plotRange, plotRange])
                 axLaserScan.plot(0, 0, 's', color = 'black')
-                axLaserScan.scatter(front_data[1], front_data[0], s = 0.5)
-                axLaserScan.scatter(rear_data[1], rear_data[0], s = 0.5, c = 'g')
                 axLaserScan.invert_xaxis()
                 axLaserScan.grid(True)
                 
