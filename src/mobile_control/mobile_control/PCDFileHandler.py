@@ -5,7 +5,6 @@ import numpy as np
 import os
 import glob
 import asyncio
-import aiofiles
 from sensor_msgs.msg import PointCloud2, PointField
 from pypcd4 import PointCloud
 
@@ -46,8 +45,9 @@ class PCDFileHandler(Node):
         if msg.data == "scan":
             self.scan_started = False
             
-            asyncio.run(self.pcd_to_temp())
-            asyncio.run(asyncio.gather(
+            loop = asyncio.get_event_loop()
+            loop.create_task(self.pcd_to_temp())
+            loop.create_task(asyncio.gather(
                 self.check_for_new_files(31),
                 self.delete_temp_files()
             ))
@@ -63,7 +63,7 @@ class PCDFileHandler(Node):
     async def rename(self, file):
         """비동기로 파일 이름을 변경합니다."""
         new_name = file.replace('.pcd', '.temp')
-        await aiofiles.os.rename(file, new_name)
+        os.rename(file, new_name)
         self.get_logger().info(f'Renamed: {file} to {new_name}')
 
     async def delete_temp_files(self):
@@ -77,7 +77,7 @@ class PCDFileHandler(Node):
 
     async def async_remove(self, file):
         """비동기로 파일을 삭제합니다."""
-        await aiofiles.os.remove(file)
+        os.remove(file)
         self.get_logger().info(f'Deleted: {file}')
 
     def extract_numbers_from_filenames(self, filenames):
