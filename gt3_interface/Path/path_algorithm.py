@@ -53,6 +53,15 @@ def get_normal_vector(y, x, data):
     return cross_vector
 
 def get_start_end_index(clust):
+    """
+    클러스터에서 시작 및 종료 인덱스를 찾는 함수
+
+    Args:
+        clust: 클러스터 데이터 shape가 (height, width, 3)인 np.array
+
+    Returns:
+        각 행에 대한 시작 및 종료 인덱스의 리스트
+    """
     clust = np.array(clust)
     result = []
     for y in range(clust.shape[0]):
@@ -70,10 +79,14 @@ def get_start_end_index(clust):
 
 def create_path(clust, length):
     """
+    시작 및 종료 위치와 방향 벡터를 반환하는 함수
 
-        Return:
-            [y (몇번 째 줄인지), [X_s, Y_s, Z_s, x_s, y_s, z_s], [X_e, Y_e, Z_e, x_e, y_e, z_e]]
-            형태의 데이터를 원소로 하는 리스트
+    Args:
+        clust: 클러스터 데이터 (2D 배열)
+        length: 시작, 끝점으로 부터 추가 이동 길이
+
+    Returns:
+        [y (몇 번째 줄인지), [X_s, Y_s, Z_s, dx_s, dy_s, dz_s], [X_e, Y_e, Z_e, dx_e, dy_e, dz_e]] 형태의 데이터를 원소로 하는 리스트
     """
     def normalize(vector):
         norm = np.linalg.norm(vector)
