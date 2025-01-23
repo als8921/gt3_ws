@@ -17,14 +17,13 @@ class PCDFileHandler(Node):
         self.publisher = self.create_publisher(String, '/unity/cmd', 10)
         self.map_publisher = self.create_publisher(PointCloud2, '/registered_topic', 1)
         self.scan_started = False  # scan_start 메시지 발행 여부 플래그
-    
+
     def map_publish(self, pc_array):
         pc_data = np.array(pc_array, dtype=np.float32).flatten()
 
         pc2_msg = PointCloud2()
         pc2_msg.header = Header()
         pc2_msg.header.stamp = self.get_clock().now().to_msg()
-
         pc2_msg.header.frame_id = 'fastlio2_link'
 
         pc2_msg.height = 1
@@ -43,16 +42,34 @@ class PCDFileHandler(Node):
         self.map_publisher.publish(pc2_msg)
 
     def listener_callback(self, msg):
-        """메시지를 수신하면 파일 삭제 및 새로운 파일 확인."""
+        """메시지를 수신하면 파일 이름 변경 후 새로운 파일 확인 및 .temp 파일 삭제."""
         if msg.data == "scan":
             self.scan_started = False
-            asyncio.run(self.delete_pcd_files())  # 비동기로 파일 삭제
-            asyncio.run(self.check_for_new_files(31))  # 삭제 후 새로운 파일 확인
+            
+            asyncio.run(self.pcd_to_temp())
+            asyncio.run(asyncio.gather(
+                self.check_for_new_files(31),
+                self.delete_temp_files()
+            ))
 
-    async def delete_pcd_files(self):
-        """지정된 디렉토리의 모든 .pcd 파일을 비동기로 삭제."""
+    async def pcd_to_temp(self):
+        """지정된 디렉토리의 모든 .pcd 파일을 .temp로 이름을 변경합니다."""
         tasks = []
         for file in glob.glob(os.path.join(self.directory, '*.pcd')):
+            tasks.append(self.rename(file))
+
+        await asyncio.gather(*tasks)
+
+    async def rename(self, file):
+        """비동기로 파일 이름을 변경합니다."""
+        new_name = file.replace('.pcd', '.temp')
+        await aiofiles.os.rename(file, new_name)
+        self.get_logger().info(f'Renamed: {file} to {new_name}')
+
+    async def delete_temp_files(self):
+        """지정된 디렉토리의 모든 .temp 파일을 비동기로 삭제합니다."""
+        tasks = []
+        for file in glob.glob(os.path.join(self.directory, '*.temp')):
             tasks.append(self.async_remove(file))
 
         await asyncio.gather(*tasks)
