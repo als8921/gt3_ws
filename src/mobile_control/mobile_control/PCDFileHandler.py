@@ -15,7 +15,6 @@ class PCDFileHandler(Node):
         self.subscription = self.create_subscription(String, '/unity/cmd', self.listener_callback, 10)
         self.publisher = self.create_publisher(String, '/unity/cmd', 10)
         self.map_publisher = self.create_publisher(PointCloud2, '/registered_topic', 1)
-        self.scan_started = False  # scan_start 메시지 발행 여부 플래그
 
     def map_publish(self, pc_array):
         pc_data = np.array(pc_array, dtype=np.float32).flatten()
@@ -43,14 +42,9 @@ class PCDFileHandler(Node):
     def listener_callback(self, msg):
         """메시지를 수신하면 파일 이름 변경 후 새로운 파일 확인 및 .temp 파일 삭제."""
         if msg.data == "scan":
-            self.scan_started = False
-            
-            loop = asyncio.get_event_loop()
-            loop.create_task(self.pcd_to_temp())
-            loop.create_task(asyncio.gather(
-                self.check_for_new_files(31),
-                self.delete_temp_files()
-            ))
+            asyncio.run(self.pcd_to_temp())
+            asyncio.run(self.delete_temp_files())
+            asyncio.run(self.check_for_new_files(31))
 
     async def pcd_to_temp(self):
         """지정된 디렉토리의 모든 .pcd 파일을 .temp로 이름을 변경합니다."""
@@ -94,18 +88,8 @@ class PCDFileHandler(Node):
 
     async def check_for_new_files(self, scan_time):
         """새로운 파일이 생성될 때까지 대기하고, 이후 파일을 확인."""
-        new_files = None
-        
-        # 새로운 파일이 생성될 때까지 대기
-        while not new_files:
-            new_files = glob.glob(os.path.join(self.directory, '*.pcd'))
-            await asyncio.sleep(0.5)  # 비동기 대기
-
-        # 파일이 존재하면 scan_start 메시지 발행
-        if new_files and not self.scan_started:
-            self.publisher.publish(String(data="scan_start"))
-            self.get_logger().info("Published: scan_start")
-            self.scan_started = True
+        self.publisher.publish(String(data="scan_start"))
+        self.get_logger().info("Published: scan_start")
 
         # 지정된 시간 동안 대기
         await asyncio.sleep(scan_time)
@@ -113,7 +97,6 @@ class PCDFileHandler(Node):
         # 확인된 파일 이름에서 숫자 추출
         collected_files = glob.glob(os.path.join(self.directory, '*.pcd'))
         numbers = self.extract_numbers_from_filenames(collected_files)
-        numbers = numbers[1:]
 
         for number in numbers:
             file_name = f'/home/gt3-3/fastlio/src/FAST_LIO/PCD/scans_{number}.pcd'
