@@ -17,6 +17,8 @@ import PCL.pcl_transformation as pcl_transformation
 import LaserScan.laserscan_transformation as laserscan_transformation
 import LaserScan.laserscan_clustering as laserscan_clustering
 
+import Path.path_algorithm
+
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
@@ -147,13 +149,6 @@ class QtController(QMainWindow):
         rclpy.shutdown()
 
     def plot_points(self):
-        """
-            1. DepthCamera의 PointCloud를 받아오기
-            2. Clustering 진행
-            3. (ADD) 데이터 보완
-            4. Transform
-            5. Plot
-        """
         self.figure3D.clear()
         self.figure2D.clear()
 
@@ -186,14 +181,11 @@ class QtController(QMainWindow):
         if closest:     
             closest = np.transpose(closest)
             ax3D.scatter(closest[0], closest[1], closest[2], c='g', marker='o', s=2)
-            x_min, x_max = closest[0].min(), closest[0].max()
-            y_min, y_max = closest[1].min(), closest[1].max()
-            z_min, z_max = closest[2].min(), closest[2].max()
-
             # 초록색 박스 시각화
-            ax3D.bar3d(x_min, y_min, z_min, 
-                    x_max - x_min, y_max - y_min, z_max - z_min, 
-                    color='green', alpha=0.2)
+            # x_min, x_max = closest[0].min(), closest[0].max()
+            # y_min, y_max = closest[1].min(), closest[1].max()
+            # z_min, z_max = closest[2].min(), closest[2].max()
+            # ax3D.bar3d(x_min, y_min, z_min, x_max - x_min, y_max - y_min, z_max - z_min, color='green', alpha=0.2)
 
         # 클러스터링 나머지 부분 시각화
         if remaining:     
@@ -203,6 +195,13 @@ class QtController(QMainWindow):
         # 클러스터링 된 데이터에서의 법선 벡터 구하기
         if(clust.size > 0):
             normals = pcl_normal_vector.get_normal_vectors(clust)
+            path = Path.path_algorithm.create_path(clust, 0.1)
+            
+            for y, start, end in path:
+                ax3D.scatter(*start[:3], c='b', marker='o', s=5)
+                ax3D.scatter(*end[:3], c='b', marker='o', s=5)
+                ax3D.quiver(*start, length=0.1, color='b')
+                ax3D.quiver(*end, length=0.1, color='b')
             
             for y in range(1, clust.shape[0] - 1):
                 for x in range(1, clust.shape[1] - 1):
@@ -211,9 +210,9 @@ class QtController(QMainWindow):
                     # 법선 벡터 끝점
                     length = 0.1
                     # end = start[0] + normals[y, x, 0], start[1] + normals[y, x, 1], start[2] + normals[y, x, 2]
-                    ax3D.quiver(start[0], start[1], start[2],
-                            normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
-                            length=length,color='r')
+                    # ax3D.quiver(start[0], start[1], start[2],
+                    #         normals[y, x, 0], normals[y, x, 1], normals[y, x, 2],
+                    #         length=length,color='r')
 
 
 
