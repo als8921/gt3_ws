@@ -68,11 +68,12 @@ class PCDFileHandler(Node):
 
     async def delete_temp_files(self):
         """지정된 디렉토리의 모든 .temp 파일을 비동기로 삭제합니다."""
-        tasks = []
-        for file in glob.glob(os.path.join(self.directory, '*.temp')):
-            tasks.append(self.async_remove(file))
-
-        await asyncio.gather(*tasks)
+        temp_files = glob.glob(os.path.join(self.directory, '*.temp'))
+        
+        # 100개씩 배치로 삭제
+        for i in range(0, len(temp_files), 100):
+            tasks = [self.async_remove(file) for file in temp_files[i:i + 100]]
+            await asyncio.gather(*tasks)
 
     async def async_remove(self, file):
         """비동기로 파일을 삭제합니다."""
