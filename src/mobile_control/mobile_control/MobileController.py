@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
-from yhs_can_interfaces.msg import CtrlCmd
+from yhs_can_interfaces.msg import CtrlCmd, SteeringCtrlCmd
 from std_msgs.msg import Float32MultiArray, Bool, String
 from rclpy.qos import qos_profile_sensor_data
 import tf_transformations
@@ -77,7 +77,8 @@ class ControlNode(Node):
         super().__init__('mobile_control')
         self.create_subscription(Odometry, '/odom3', self.odom_callback, qos_profile=qos_profile_sensor_data)
         self.create_subscription(Float32MultiArray, '/target', self.command_callback, 10)  # 목표 위치 및 자세 구독
-        self.pub_command = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
+        self.ctrl_cmd_pub = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
+        self.steering_cmd_pub = self.create_publisher(SteeringCtrlCmd, 'steering_ctrl_cmd', 10)
         self.pub_arrival_flag = self.create_publisher(String, '/unity/cmd', 10)
         self.mobile_move_pub = self.create_publisher(Bool, '/mobile/move_flag', 10)
 
@@ -95,6 +96,7 @@ class ControlNode(Node):
 
         self.lateral_direction = 0
         self.scan_rotate_start_time = None
+        self.lateral_start_time = None
 
 
     def odom_callback(self, msg):
@@ -231,19 +233,28 @@ class ControlNode(Node):
                 self.lateral_direction = 0
                 time.sleep(1)
             else:
-                # 목표 선속도 계산 (최대 선속도로 제한)
-                _target_linear_speed = self.lateral_direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
-                
-                # 선속도 점진적 증가 로직
-                if self.current_linear_speed < _target_linear_speed:
-                    self.current_linear_speed += 0.01  # 속도를 천천히 증가
-                elif self.current_linear_speed > _target_linear_speed:
-                    self.current_linear_speed -= 0.01  # 속도를 천천히 감소
-                else:
-                    self.current_linear_speed = _target_linear_speed
 
-                # 선속도를 목표 속도로 설정
-                self.PublishCtrlCmd(gear = Gear.Lateral, linear_speed = LinearYSpeedLimit(self.current_linear_speed))
+                if self.lateral_start_time is None:
+                    self.lateral_start_time = self.get_clock().now().nanoseconds
+                    
+                elapsed_time = (self.get_clock().now().nanoseconds - self.lateral_start_time) / 1e9
+
+                if elapsed_time < 1:
+                    self.PublishCtrlCmd(gear = Gear.Lateral, linear_speed = 0)
+                    
+                else:
+                    # 목표 선속도 계산 (최대 선속도로 제한)
+                    _target_linear_speed = self.lateral_direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
+                    
+                    # 선속도 점진적 증가 로직
+                    if self.current_linear_speed < _target_linear_speed:
+                        self.current_linear_speed += 0.01  # 속도를 천천히 증가
+                    elif self.current_linear_speed > _target_linear_speed:
+                        self.current_linear_speed -= 0.01  # 속도를 천천히 감소
+                    else:
+                        self.current_linear_speed = _target_linear_speed
+                    # 선속도를 목표 속도로 설정
+                    self.PublishCtrlCmd(gear = Gear.Lateral, linear_speed = LinearYSpeedLimit(self.current_linear_speed))
 
 
         elif self.state == State.FinalRotate:
@@ -259,6 +270,7 @@ class ControlNode(Node):
                 self.get_logger().info(f'FinalRotate Finish')
                 time.sleep(1)
                 self.scan_rotate_start_time = None
+                self.lateral_start_time = None
                 if(self.CmdPos.paintMode):
                     self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
                 else:
@@ -277,15 +289,29 @@ class ControlNode(Node):
         return Kp * error
 
     def PublishCtrlCmd(self, gear = Gear.Disable, linear_speed = 0, angular_speed=0):
-        ctrl_cmd = CtrlCmd()
-        ctrl_cmd.ctrl_cmd_gear = gear
+        if(gear == Gear.Disable):
+            ctrl_cmd = CtrlCmd()
+            ctrl_cmd.ctrl_cmd_gear = Gear.Disable
 
-        if(gear == Gear.Differential):
+            steering_cmd = SteeringCtrlCmd()
+            steering_cmd.ctrl_cmd_gear = Gear.Disable
+
+            self.ctrl_cmd_pub.publish(ctrl_cmd)
+            self.steering_cmd_pub.publish(steering_cmd)
+
+        elif(gear == Gear.Differential):
+            ctrl_cmd = CtrlCmd()
+            ctrl_cmd.ctrl_cmd_gear = gear
             ctrl_cmd.ctrl_cmd_x_linear = -LinearXSpeedLimit(linear_speed)
             ctrl_cmd.ctrl_cmd_z_angular = AngularSpeedLimit(angular_speed)
+            self.ctrl_cmd_pub.publish(ctrl_cmd)
+
         elif(gear == Gear.Lateral):
-            ctrl_cmd.ctrl_cmd_y_linear = -LinearYSpeedLimit(linear_speed)
-        self.pub_command.publish(ctrl_cmd)
+            steering_cmd = SteeringCtrlCmd()
+            steering_cmd.ctrl_cmd_gear = 7
+            steering_cmd.steering_ctrl_cmd_steering = 90
+            steering_cmd.steering_ctrl_cmd_velocity = -LinearYSpeedLimit(linear_speed)
+            self.steering_cmd_pub.publish(steering_cmd)
 
 def main(args=None):
     rclpy.init(args=args)
