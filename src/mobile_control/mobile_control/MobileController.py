@@ -19,6 +19,8 @@ MaxXLinearSpeed = 0.3       # [m/s]
 MaxYLinearSpeed = 0.3       # [m/s]
 MaxAngularSpeed = 30        # [deg/s]
 
+ScanRotateSpeed = 12        # [deg/s]
+
 ThetaErrorBoundary = 1     # 각도 명령 허용 오차
 ####################
 
@@ -50,6 +52,7 @@ class Command(Position):
         self.gearSetting = Gear.Differential
         self.height = 0.0
         self.paintMode = False
+        self.scanMode = False
 
 def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180
@@ -108,6 +111,7 @@ class ControlNode(Node):
     def command_callback(self, msg):
         # 목표 위치 및 자세 업데이트
         if len(msg.data) >= 5:
+            self.CmdPos = Command()
             self.CmdPos.gearSetting = msg.data[0]
             self.CmdPos.x = msg.data[1]
             self.CmdPos.y = msg.data[2]
@@ -118,6 +122,7 @@ class ControlNode(Node):
             if(self.CmdPos.gearSetting == Gear.Rotate):
                 self.state = State.ScanRotate
                 self.CmdPos.theta = self.Pos.theta
+                self.CmdPos.scanMode = True
 
             elif(self.CmdPos.gearSetting == Gear.Disable):
                 self.state == State.Stop
@@ -149,7 +154,7 @@ class ControlNode(Node):
                 self.state = State.FinalRotate  # 상태를 FinalRotate으로 변경
                 
             else:
-                self.PublishCtrlCmd(gear=Gear.Differential, angular_speed=12)  # 각속도를 12도로 설정
+                self.PublishCtrlCmd(gear=Gear.Differential, angular_speed=ScanRotateSpeed)  # 각속도를 12도로 설정
                 
         elif self.state == State.InitialRotate:
             if(self.CmdPos.gearSetting == Gear.Differential):
@@ -166,8 +171,7 @@ class ControlNode(Node):
                     self.get_logger().info(f'error_Theta : {RelativeAngle(self.Pos, self.CmdPos) - self.Pos.theta}[deg]')
 
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
-
-                    # time.sleep(0.5)
+                    time.sleep(1)
                     
             elif(self.CmdPos.gearSetting == Gear.Lateral):
                 self.Rotate(NormalizeAngle(self.CmdPos.theta))
@@ -179,7 +183,7 @@ class ControlNode(Node):
                     self.current_linear_speed = 0
                     self.get_logger().info(f'InitialRotate Finish, MoveLateral{self.target_distance}[m]')
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
-                    # time.sleep(0.5)
+                    time.sleep(1)
 
 
 
@@ -192,7 +196,7 @@ class ControlNode(Node):
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info(f'MoveForward Finish {self.target_distance:.2f}[m]')
                 self.state = State.FinalRotate
-                # time.sleep(0.5)
+                time.sleep(1)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
                 _target_linear_speed = LinearXSpeedLimit(self.PControl(_error, Kp = LinearKp))
@@ -225,7 +229,7 @@ class ControlNode(Node):
                 self.get_logger().info(f'MoveLateral Finish {self.target_distance:.2f}[m]')
                 self.state = State.FinalRotate
                 self.lateral_direction = 0
-                # time.sleep(0.5)
+                time.sleep(1)
             else:
                 # 목표 선속도 계산 (최대 선속도로 제한)
                 _target_linear_speed = self.lateral_direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
@@ -253,16 +257,20 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Distance : {RelativeDistance(self.CmdPos, self.Pos)}[m]')
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
-                time.sleep(0.5)
+                time.sleep(1)
                 self.scan_rotate_start_time = None
                 if(self.CmdPos.paintMode):
                     self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
                 else:
                     self.mobile_move_pub.publish(Bool(data = True))
 
+                self.CmdPos = Command()
+
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
         _angular_speed = self.PControl(_error, Kp = AngularKp)
+        if(self.CmdPos.scanMode):
+            _angular_speed = AngularSpeedLimit(_angular_speed, maxSpeed = ScanRotateSpeed)
         self.PublishCtrlCmd(gear = Gear.Differential, angular_speed = _angular_speed)
 
     def PControl(self, error, Kp=1):
@@ -277,8 +285,6 @@ class ControlNode(Node):
             ctrl_cmd.ctrl_cmd_z_angular = AngularSpeedLimit(angular_speed)
         elif(gear == Gear.Lateral):
             ctrl_cmd.ctrl_cmd_y_linear = -LinearYSpeedLimit(linear_speed)
-        # self.get_logger().info(f'{(self.Pos.x, self.Pos.y)}[m], {self.Pos.theta:.2f}[deg]')
-        # self.get_logger().info(f'{linear_speed:.2f}[m/s], {ctrl_cmd.ctrl_cmd_z_angular:.2f}[deg/s]')
         self.pub_command.publish(ctrl_cmd)
 
 def main(args=None):
