@@ -41,7 +41,7 @@ class PCDFileHandler(Node):
 
     def listener_callback(self, msg):
         """메시지를 수신하면 파일 이름 변경 후 새로운 파일 확인 및 .temp 파일 삭제."""
-        if msg.data == "scan":
+        if msg.data == "preprocess_scan":
             asyncio.run(self.pcd_to_temp())
             asyncio.run(self.delete_temp_files())
             asyncio.run(self.check_for_new_files(31))
