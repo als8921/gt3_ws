@@ -29,9 +29,9 @@ class ControlNode(Node):
         self.StartPos = Position()  # 전진 명령을 시작할 때의 위치
         self.CmdPos = Command()    # 목표 위치
 
+        self.state = State.Stop
         self.current_linear_speed = 0.0
         self.target_distance = 0.0
-        self.state = State.Stop
         self.init_odom_state = False
 
         self.lateral_direction = 0
@@ -39,6 +39,16 @@ class ControlNode(Node):
         self.scan_rotate_start_time = None
         self.lateral_start_time = None
 
+    def reset(self):
+        self.state = State.Stop
+        self.current_linear_speed = 0.0
+        self.target_distance = 0.0
+        self.init_odom_state = False
+
+        self.lateral_direction = 0
+        self.init_rotate_angle = None
+        self.scan_rotate_start_time = None
+        self.lateral_start_time = None
 
     def odom_callback(self, msg):
         # 현재 위치와 자세 업데이트
@@ -69,7 +79,7 @@ class ControlNode(Node):
                 self.CmdPos.scanMode = True
 
             elif(self.CmdPos.gearSetting == Gear.Disable):
-                self.state == State.Stop
+                self.state = State.Stop
                 self.get_logger().info('-------------------------- Disabled --------------------------')
                 self.get_logger().info('Mobile_Disable')
                 
@@ -86,6 +96,7 @@ class ControlNode(Node):
     def control(self):
         if self.state == State.Stop:
             self.PublishCtrlCmd()
+            self.reset()
 
         elif self.state == State.ScanRotate:
             if self.scan_rotate_start_time is None:
