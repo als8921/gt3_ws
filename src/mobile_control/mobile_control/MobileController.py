@@ -7,70 +7,10 @@ from rclpy.qos import qos_profile_sensor_data
 import tf_transformations
 import math
 import time
-from enum import Enum
 
-### Parameters ###
-Hz = 30
-LinearKp = 0.73
-AngularKp = 1.5
-
-MinXLinearSpeed = 0.0       # [m/s]    후진기능을 넣을 시 음수로 전환
-MaxXLinearSpeed = 0.3       # [m/s]
-MaxYLinearSpeed = 0.3       # [m/s]
-MaxAngularSpeed = 30        # [deg/s]
-
-ScanRotateSpeed = 12        # [deg/s]
-
-ThetaErrorBoundary = 1     # 각도 명령 허용 오차
-####################
-
-class State(Enum):
-    Stop = "Stop"
-    InitialRotate = 0
-    MoveForward = 1
-    MoveLateral = 2
-    FinalRotate = 3
-    ScanRotate = 4
-
-class Gear:
-    Disable = 0
-    Parking = 1
-    Neutral = 2
-    Differential = 6
-    Lateral = 8
-    Rotate = 10
-
-class Position:
-    def __init__(self):
-        self.x = 0.0        # [m]
-        self.y = 0.0        # [m]
-        self.theta = 0.0    # [deg]
-
-class Command(Position):
-    def __init__(self):
-        super().__init__()
-        self.gearSetting = Gear.Differential
-        self.height = 0.0
-        self.paintMode = False
-        self.scanMode = False
-
-def NormalizeAngle(angle):
-    return (angle + 180) % 360 - 180
-
-def AngularSpeedLimit(speed, maxSpeed = MaxAngularSpeed):
-    return float(max(-maxSpeed, min(speed, maxSpeed)))
-
-def LinearXSpeedLimit(speed, minSpeed = MinXLinearSpeed, maxSpeed = MaxXLinearSpeed):
-    return float(max(minSpeed, min(speed, maxSpeed)))
-
-def LinearYSpeedLimit(speed, minSpeed = -MaxYLinearSpeed, maxSpeed = MaxYLinearSpeed):
-    return float(max(minSpeed, min(speed, maxSpeed)))
-
-def RelativeDistance(a : Position, b : Position):
-    return math.sqrt((b.x - a.x)**2 + (b.y - a.y)**2)
-
-def RelativeAngle(a : Position, b : Position):
-    return NormalizeAngle(math.degrees(math.atan2(b.y - a.y, b.x - a.x)))
+from .submodules.utils import *
+from .submodules.parameters import *
+from .submodules.enums import *
     
 class ControlNode(Node):
     def __init__(self):
