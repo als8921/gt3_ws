@@ -93,6 +93,7 @@ class ControlNode(Node):
             # self.get_logger().info("RotateScan : {elapsed_time}/30.0[s]")
             if elapsed_time >= 30:  # 30초가 경과했는지 확인
                 self.get_logger().info("RotateScan Done")
+                self.scan_rotate_start_time = None
                 self.state = State.FinalRotate  # 상태를 FinalRotate으로 변경
                 
             else:
@@ -172,6 +173,7 @@ class ControlNode(Node):
                 self.state = State.FinalRotate
                 self.lateral_direction = 0
                 time.sleep(1)
+                self.lateral_start_time = None
             else:
 
                 if self.lateral_start_time is None:
@@ -209,8 +211,6 @@ class ControlNode(Node):
                 self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
                 self.get_logger().info(f'FinalRotate Finish')
                 time.sleep(1)
-                self.scan_rotate_start_time = None
-                self.lateral_start_time = None
                 if(self.CmdPos.paintMode):
                     self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
                 else:
