@@ -35,6 +35,7 @@ class ControlNode(Node):
         self.init_odom_state = False
 
         self.lateral_direction = 0
+        self.init_rotate_angle = None
         self.scan_rotate_start_time = None
         self.lateral_start_time = None
 
@@ -117,13 +118,25 @@ class ControlNode(Node):
                     time.sleep(1)
                     
             elif(self.CmdPos.gearSetting == Gear.Lateral):
-                self.Rotate(NormalizeAngle(self.CmdPos.theta))
+
+                if(self.lateral_direction == 0):
+                    angle_to_target = RelativeAngle(self.Pos, self.CmdPos)
+                    _angle_error = NormalizeAngle(angle_to_target - self.Pos.theta)
+
+                    self.lateral_direction = 1 if _angle_error >= 0 else -1  # 1 일때 +y 방향, -1 일때 -y 방향
+
+                if(self.init_rotate_angle == None):
+                    self.init_rotate_angle = NormalizeAngle(RelativeAngle(self.Pos, self.CmdPos) - (90 * self.lateral_direction))
+
+
+                self.Rotate(self.init_rotate_angle)
                 if abs(NormalizeAngle(self.CmdPos.theta - self.Pos.theta)) <= ThetaErrorBoundary:
                     self.state = State.MoveLateral
                     self.StartPos.x = self.Pos.x
                     self.StartPos.y = self.Pos.y
                     self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
                     self.current_linear_speed = 0
+                    self.init_rotate_angle = None
                     self.get_logger().info('-------------------------- InitialRotate Finish --------------------------')
                     self.get_logger().info(f'각도 : {self.Pos.theta} / {RelativeAngle(self.Pos, self.CmdPos)}[deg]')
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
@@ -161,13 +174,6 @@ class ControlNode(Node):
             current_distance = RelativeDistance(self.Pos, self.StartPos)
             _error = self.target_distance - current_distance
             
-            if(self.lateral_direction == 0):
-                angle_to_target = RelativeAngle(self.Pos, self.CmdPos)
-                _angle_error = NormalizeAngle(angle_to_target - self.Pos.theta)
-
-                self.lateral_direction = 1 if _angle_error >= 0 else -1  # 1 일때 +y 방향, -1 일때 -y 방향
-
-
             if _error <= 0.01:  # 목표 거리 도달 시
                 self.current_linear_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
@@ -249,7 +255,7 @@ class ControlNode(Node):
         elif(gear == Gear.Lateral):
             steering_cmd = SteeringCtrlCmd()
             steering_cmd.ctrl_cmd_gear = 7
-            steering_cmd.steering_ctrl_cmd_steering = 90
+            steering_cmd.steering_ctrl_cmd_steering = float(90)
             steering_cmd.steering_ctrl_cmd_velocity = -LinearYSpeedLimit(linear_speed)
             self.steering_cmd_pub.publish(steering_cmd)
 
