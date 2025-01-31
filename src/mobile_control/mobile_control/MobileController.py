@@ -60,7 +60,8 @@ class ControlNode(Node):
             self.CmdPos.theta = msg.data[3]
             self.CmdPos.height = msg.data[4]
             self.CmdPos.paintMode = True if msg.data[5] == 1 else False
-            self.get_logger().info(f'Target received: Position: {[self.CmdPos.x, self.CmdPos.y]}, Theta: {self.CmdPos.theta}')
+            self.get_logger().info('-------------------------- Target received --------------------------')
+            self.get_logger().info(f'Position: {[self.CmdPos.x, self.CmdPos.y]}, Theta: {self.CmdPos.theta}')
             if(self.CmdPos.gearSetting == Gear.Rotate):
                 self.state = State.ScanRotate
                 self.CmdPos.theta = self.Pos.theta
@@ -68,7 +69,8 @@ class ControlNode(Node):
 
             elif(self.CmdPos.gearSetting == Gear.Disable):
                 self.state == State.Stop
-                self.get_logger().info(f'Mobile_Disable')
+                self.get_logger().info('-------------------------- Disabled --------------------------')
+                self.get_logger().info('Mobile_Disable')
                 
             else:
                 if(math.sqrt((self.CmdPos.x - self.Pos.x) ** 2  + (self.CmdPos.y - self.Pos.y) ** 2) < 0.15):
@@ -86,13 +88,13 @@ class ControlNode(Node):
 
         elif self.state == State.ScanRotate:
             if self.scan_rotate_start_time is None:
-                self.get_logger().info("RotateScan Start")
+                self.get_logger().info('-------------------------- RotateScan Start --------------------------')
                 self.scan_rotate_start_time = self.get_clock().now().nanoseconds
                 
             elapsed_time = (self.get_clock().now().nanoseconds - self.scan_rotate_start_time) / 1e9  # 경과 시간 계산
             # self.get_logger().info("RotateScan : {elapsed_time}/30.0[s]")
             if elapsed_time >= 30:  # 30초가 경과했는지 확인
-                self.get_logger().info("RotateScan Done")
+                self.get_logger().info('-------------------------- RotateScan Finish --------------------------')
                 self.scan_rotate_start_time = None
                 self.state = State.FinalRotate  # 상태를 FinalRotate으로 변경
                 
@@ -108,10 +110,8 @@ class ControlNode(Node):
                     self.StartPos.y = self.Pos.y
                     self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
                     self.current_linear_speed = 0
-                    self.get_logger().info(f'InitialRotate Finish, MoveForward{self.target_distance}[m]')
-                    self.get_logger().info(f'목표 각도 : {RelativeAngle(self.Pos, self.CmdPos)}')
-                    self.get_logger().info(f'현재 각도 : {self.Pos.theta}')
-                    self.get_logger().info(f'error_Theta : {RelativeAngle(self.Pos, self.CmdPos) - self.Pos.theta}[deg]')
+                    self.get_logger().info('-------------------------- InitialRotate Finish --------------------------')
+                    self.get_logger().info(f'각도 : {self.Pos.theta} / {RelativeAngle(self.Pos, self.CmdPos)}')
 
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                     time.sleep(1)
@@ -124,7 +124,8 @@ class ControlNode(Node):
                     self.StartPos.y = self.Pos.y
                     self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
                     self.current_linear_speed = 0
-                    self.get_logger().info(f'InitialRotate Finish, MoveLateral{self.target_distance}[m]')
+                    self.get_logger().info('-------------------------- InitialRotate Finish --------------------------')
+                    self.get_logger().info(f'각도 : {self.Pos.theta} / {RelativeAngle(self.Pos, self.CmdPos)}[deg]')
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                     time.sleep(1)
 
@@ -137,7 +138,8 @@ class ControlNode(Node):
             if _error <= 0.01:  # 목표 거리 도달 시
                 self.current_linear_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
-                self.get_logger().info(f'MoveForward Finish {self.target_distance:.2f}[m]')
+                self.get_logger().info('-------------------------- MoveForward Finish --------------------------')
+                self.get_logger().info(f'거리 : {current_distance} / {self.target_distance}[m]')
                 self.state = State.FinalRotate
                 time.sleep(1)
             else:
@@ -169,11 +171,12 @@ class ControlNode(Node):
             if _error <= 0.01:  # 목표 거리 도달 시
                 self.current_linear_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
-                self.get_logger().info(f'MoveLateral Finish {self.target_distance:.2f}[m]')
+                self.get_logger().info('-------------------------- MoveLateral Finish --------------------------')
+                self.get_logger().info(f'거리 : {current_distance} / {self.target_distance}[m]')
                 self.state = State.FinalRotate
                 self.lateral_direction = 0
-                time.sleep(1)
                 self.lateral_start_time = None
+                time.sleep(1)
             else:
 
                 if self.lateral_start_time is None:
@@ -204,19 +207,16 @@ class ControlNode(Node):
             if abs(NormalizeAngle(self.CmdPos.theta - self.Pos.theta)) <= ThetaErrorBoundary:
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.state = State.Stop
-                self.get_logger().info('목표 위치 도달.')
-                self.get_logger().info(f'목표 위치 : {self.CmdPos.x, self.CmdPos.y, self.CmdPos.theta}')
-                self.get_logger().info(f'현재 위치 : {self.Pos.x, self.Pos.y, self.Pos.theta}')
-                self.get_logger().info(f'error_Distance : {RelativeDistance(self.CmdPos, self.Pos)}[m]')
-                self.get_logger().info(f'error_Theta : {self.CmdPos.theta - self.Pos.theta}[deg]')
-                self.get_logger().info(f'FinalRotate Finish')
-                time.sleep(1)
+                self.get_logger().info('-------------------------- Target Arrived --------------------------')
+                self.get_logger().info(f'목표 위치 : {self.CmdPos.x, self.CmdPos.y}, {self.CmdPos.theta}[deg]')
+                self.get_logger().info(f'현재 위치 : {self.Pos.x, self.Pos.y}, {self.Pos.theta}[deg]')
+                self.get_logger().info(f'error : {RelativeDistance(self.CmdPos, self.Pos)}[m], {self.CmdPos.theta - self.Pos.theta}[deg]')
                 if(self.CmdPos.paintMode):
                     self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
                 else:
                     self.mobile_move_pub.publish(Bool(data = True))
-
                 self.CmdPos = Command()
+                time.sleep(1)
 
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
