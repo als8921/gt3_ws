@@ -130,15 +130,15 @@ class ControlNode(Node):
 
 
                 self.Rotate(self.init_rotate_angle)
-                if abs(NormalizeAngle(self.CmdPos.theta - self.Pos.theta)) <= ThetaErrorBoundary:
+                if abs(NormalizeAngle(self.init_rotate_angle - self.Pos.theta)) <= ThetaErrorBoundary:
                     self.state = State.MoveLateral
                     self.StartPos.x = self.Pos.x
                     self.StartPos.y = self.Pos.y
                     self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
                     self.current_linear_speed = 0
-                    self.init_rotate_angle = None
                     self.get_logger().info('-------------------------- InitialRotate Finish --------------------------')
-                    self.get_logger().info(f'각도 : {self.Pos.theta} / {RelativeAngle(self.Pos, self.CmdPos)}[deg]')
+                    self.get_logger().info(f'각도 : {self.Pos.theta} / {self.init_rotate_angle}[deg]')
+                    self.init_rotate_angle = None
                     self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                     time.sleep(1)
 
