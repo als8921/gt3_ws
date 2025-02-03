@@ -72,13 +72,14 @@ class ControlNode(Node):
             self.CmdPos.y = msg.data[2]
             self.CmdPos.theta = msg.data[3]
             self.CmdPos.height = msg.data[4]
-            self.CmdPos.paintMode = True if msg.data[5] == 1 else False
+            self.CmdPos.mode = msg.data[5]
             self.get_logger().info('-------------------------- Target received --------------------------')
             self.get_logger().info(f'Position: {[self.CmdPos.x, self.CmdPos.y]}, Theta: {self.CmdPos.theta}')
+
             if(self.CmdPos.gearSetting == Gear.Rotate):
                 self.state = State.ScanRotate
                 self.CmdPos.theta = self.Pos.theta
-                self.CmdPos.scanMode = True
+                self.CmdPos.mode = Mode.ScanMode
 
             elif(self.CmdPos.gearSetting == Gear.Disable):
                 self.state = State.Stop
@@ -106,7 +107,6 @@ class ControlNode(Node):
                 self.scan_rotate_start_time = self.get_clock().now().nanoseconds
                 
             elapsed_time = (self.get_clock().now().nanoseconds - self.scan_rotate_start_time) / 1e9  # 경과 시간 계산
-            # self.get_logger().info("RotateScan : {elapsed_time}/30.0[s]")
             if elapsed_time >= 30:  # 30초가 경과했는지 확인
                 self.get_logger().info('-------------------------- RotateScan Finish --------------------------')
                 self.scan_rotate_start_time = None
@@ -214,9 +214,9 @@ class ControlNode(Node):
                     _target_linear_speed = self.lateral_direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
                     
                     # 선속도 점진적 증가 로직
-                    if self.current_linear_speed < _target_linear_speed:
+                    if(_target_linear_speed > 0 and self.current_linear_speed < _target_linear_speed):
                         self.current_linear_speed += 0.01  # 속도를 천천히 증가
-                    elif self.current_linear_speed > _target_linear_speed:
+                    elif(_target_linear_speed < 0 and self.current_linear_speed > _target_linear_speed):
                         self.current_linear_speed -= 0.01  # 속도를 천천히 감소
                     else:
                         self.current_linear_speed = _target_linear_speed
@@ -233,9 +233,9 @@ class ControlNode(Node):
                 self.get_logger().info(f'목표 위치 : {self.CmdPos.x, self.CmdPos.y}, {self.CmdPos.theta}[deg]')
                 self.get_logger().info(f'현재 위치 : {self.Pos.x, self.Pos.y}, {self.Pos.theta}[deg]')
                 self.get_logger().info(f'error : {RelativeDistance(self.CmdPos, self.Pos)}[m], {self.CmdPos.theta - self.Pos.theta}[deg]')
-                if(self.CmdPos.paintMode):
+                if(self.CmdPos.mode == Mode.PaintMode):
                     self.pub_arrival_flag.publish(String(data = 'mobile_arrived;' + str(self.CmdPos.height)))
-                else:
+                elif(self.CmdPos.mode == Mode.NextMove):
                     self.mobile_move_pub.publish(Bool(data = True))
                 self.CmdPos = Command()
                 time.sleep(1)
@@ -254,7 +254,7 @@ class ControlNode(Node):
             self.current_angular_speed = _target_angular_speed
 
 
-        if(self.CmdPos.scanMode):
+        if(self.CmdPos.mode == Mode.ScanMode):
             _angular_speed = AngularSpeedLimit(_angular_speed, maxSpeed = ScanRotateSpeed)
         else:
             _angular_speed = self.current_angular_speed

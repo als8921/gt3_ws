@@ -8,6 +8,13 @@ class Gear:
     Lateral = 8
     Rotate = 10
 
+class Mode:
+    NONE = 0
+    PaintMode = 1
+    FinalArrived = 2
+    ScanMode = 3
+    NextMove = 4
+
 class Position:
     def __init__(self):
         self.x = 0.0        # [m]
@@ -19,8 +26,7 @@ class Command(Position):
         super().__init__()
         self.gearSetting = Gear.Differential
         self.height = 0.0
-        self.paintMode = False
-        self.scanMode = False
+        self.mode = 0
 
 def NormalizeAngle(angle):
     return (angle + 180) % 360 - 180

@@ -10,13 +10,7 @@ import os
 sys.path.append(os.path.dirname(__file__))
 import SettingJson
 
-class Gear:
-    Disable = 0
-    Parking = 1
-    Neutral = 2
-    Differential = 6
-    Lateral = 8
-    Rotate = 10
+from .submodules.utils import *
 
 class CommandPositionPublisher(Node):
     def __init__(self):
@@ -52,21 +46,18 @@ class CommandPositionPublisher(Node):
 
         position_queue = deque()
 
-        position_queue.append((Gear.Differential, new_pos[0] + move_vector_norm[0] * _D_task, new_pos[1] + move_vector_norm[1] * _D_task, theta_degrees, height, 0))
+        position_queue.append((Gear.Differential, new_pos[0] + move_vector_norm[0] * _D_task, new_pos[1] + move_vector_norm[1] * _D_task, theta_degrees, height, Mode.NextMove))
         position_queue.append((Gear.Lateral, new_pos[0], new_pos[1], theta_degrees, height, 1))
 
         for i in range(1, int((move_vector_mag - 2 * _D_horizontal) // _D_task) + 1):
             current_position = new_pos + move_vector_norm * (_D_task * i)
-            position_queue.append((Gear.Lateral, current_position[0], current_position[1], theta_degrees, height, 1))
+            position_queue.append((Gear.Lateral, current_position[0], current_position[1], theta_degrees, height, Mode.PaintMode))
 
-        # 마지막 위치 추가 (모듈로 연산으로 인한 위치)
         if (move_vector_mag - 2 * _D_horizontal) % _D_task != 0:
             last_position = new_pos + move_vector_norm * (move_vector_mag - 2 * _D_horizontal)
-            position_queue.append((Gear.Lateral, last_position[0], last_position[1], theta_degrees, height, 1))
-            position_queue.append((Gear.Lateral, last_position[0] - move_vector_norm[0] * _D_task, last_position[1] - move_vector_norm[1] * _D_task, theta_degrees, height, 0))
+            position_queue.append((Gear.Lateral, last_position[0], last_position[1], theta_degrees, height, Mode.PaintMode))
+            position_queue.append((Gear.Lateral, last_position[0] - move_vector_norm[0] * _D_task, last_position[1] - move_vector_norm[1] * _D_task, theta_degrees, height, Mode.FinalArrived))
 
-        for i in position_queue:
-            print(i)
         return position_queue
             
     def string_callback(self, msg):
@@ -91,7 +82,7 @@ class CommandPositionPublisher(Node):
             elif cmd[0] == 'scan_start':
                 self.get_logger().info(cmd[0])
                 msg = Float32MultiArray()
-                msg.data = [float(Gear.Rotate), 0.0, 0.0, 0.0, 0.0, 0.0]
+                msg.data = [float(Gear.Rotate), 0.0, 0.0, 0.0, 0.0, float(Mode.ScanMode)]
                 self.target_pub.publish(msg)
 
             elif cmd[0] == 'mobile_emergency':
@@ -124,9 +115,9 @@ class CommandPositionPublisher(Node):
         if msg.data:  # True가 들어온 경우
             if self.queue:
                 # 큐에서 하나 꺼내서 퍼블리시
-                gear, x, y, angle, height, paintmode = self.queue.popleft()
+                gear, x, y, angle, height, mode = self.queue.popleft()
                 msg = Float32MultiArray()
-                msg.data = [float(gear), x, y, angle, height, float(paintmode)]
+                msg.data = [float(gear), x, y, angle, height, float(mode)]
                 self.target_pub.publish(msg)
                 self.get_logger().info(f'Publishing: {msg.data}')
         else:
