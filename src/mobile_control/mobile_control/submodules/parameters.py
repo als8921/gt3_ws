@@ -2,7 +2,7 @@
 ### Parameters ###
 Hz = 30
 LinearKp = 0.73
-AngularKp = 1.5
+AngularKp = 1.3
 
 MinXLinearSpeed = 0.0       # [m/s]    후진기능을 넣을 시 음수로 전환
 MaxXLinearSpeed = 0.3       # [m/s]

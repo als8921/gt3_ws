@@ -31,6 +31,7 @@ class ControlNode(Node):
 
         self.state = State.Stop
         self.current_linear_speed = 0.0
+        self.current_angular_speed = 0.0
         self.target_distance = 0.0
         self.init_odom_state = False
 
@@ -42,6 +43,7 @@ class ControlNode(Node):
     def reset(self):
         self.state = State.Stop
         self.current_linear_speed = 0.0
+        self.current_angular_speed = 0.0
         self.target_distance = 0.0
         self.init_odom_state = False
 
@@ -122,6 +124,7 @@ class ControlNode(Node):
                     self.StartPos.y = self.Pos.y
                     self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
                     self.current_linear_speed = 0
+                    self.current_angular_speed = 0
                     self.get_logger().info('-------------------------- InitialRotate Finish --------------------------')
                     self.get_logger().info(f'각도 : {self.Pos.theta} / {RelativeAngle(self.Pos, self.CmdPos)}')
 
@@ -147,6 +150,7 @@ class ControlNode(Node):
                     self.StartPos.y = self.Pos.y
                     self.target_distance = RelativeDistance(self.CmdPos, self.StartPos)
                     self.current_linear_speed = 0
+                    self.current_angular_speed = 0
                     self.get_logger().info('-------------------------- InitialRotate Finish --------------------------')
                     self.get_logger().info(f'각도 : {self.Pos.theta} / {self.init_rotate_angle}[deg]')
                     self.init_rotate_angle = None
@@ -161,6 +165,7 @@ class ControlNode(Node):
             
             if _error <= 0.01:  # 목표 거리 도달 시
                 self.current_linear_speed = 0
+                self.current_angular_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info('-------------------------- MoveForward Finish --------------------------')
                 self.get_logger().info(f'거리 : {current_distance} / {self.target_distance}[m]')
@@ -170,11 +175,10 @@ class ControlNode(Node):
                 # 목표 선속도 계산 (최대 선속도로 제한)
                 _target_linear_speed = LinearXSpeedLimit(self.PControl(_error, Kp = LinearKp))
                 
-                # 선속도 점진적 증가 로직
-                if self.current_linear_speed < _target_linear_speed:
-                    self.current_linear_speed += 0.01  # 속도를 천천히 증가
-                elif self.current_linear_speed > _target_linear_speed:
-                    self.current_linear_speed -= 0.01  # 속도를 천천히 감소
+                if(_target_linear_speed > 0 and self.current_linear_speed < _target_linear_speed):
+                    self.current_linear_speed += 0.002  # 속도를 천천히 증가
+                elif(_target_linear_speed < 0 and self.current_linear_speed > _target_linear_speed):
+                    self.current_linear_speed -= 0.002  # 속도를 천천히 감소
                 else:
                     self.current_linear_speed = _target_linear_speed
 
@@ -187,6 +191,7 @@ class ControlNode(Node):
             
             if _error <= 0.01:  # 목표 거리 도달 시
                 self.current_linear_speed = 0
+                self.current_angular_speed = 0
                 self.PublishCtrlCmd()  # 최종적으로 속도 0으로 설정
                 self.get_logger().info('-------------------------- MoveLateral Finish --------------------------')
                 self.get_logger().info(f'거리 : {current_distance} / {self.target_distance}[m]')
@@ -238,8 +243,22 @@ class ControlNode(Node):
     def Rotate(self, _desired_theta):
         _error = NormalizeAngle(_desired_theta - self.Pos.theta)
         _angular_speed = self.PControl(_error, Kp = AngularKp)
+
+        _target_angular_speed = self.PControl(_error, Kp = AngularKp)
+
+        if(_target_angular_speed > 0 and self.current_angular_speed < _target_angular_speed):
+            self.current_angular_speed += 0.07  # 속도를 천천히 증가
+        elif(_target_angular_speed < 0 and self.current_angular_speed > _target_angular_speed):
+            self.current_angular_speed -= 0.07  # 속도를 천천히 감소
+        else:
+            self.current_angular_speed = _target_angular_speed
+
+
         if(self.CmdPos.scanMode):
             _angular_speed = AngularSpeedLimit(_angular_speed, maxSpeed = ScanRotateSpeed)
+        else:
+            _angular_speed = self.current_angular_speed
+
         self.PublishCtrlCmd(gear = Gear.Differential, angular_speed = _angular_speed)
 
     def PControl(self, error, Kp=1):
