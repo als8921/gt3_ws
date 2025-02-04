@@ -1,4 +1,3 @@
-
 ### Parameters ###
 Hz = 30
 LinearKp = 0.73
@@ -11,5 +10,10 @@ MaxAngularSpeed = 30        # [deg/s]
 
 ScanRotateSpeed = 12        # [deg/s]
 
-ThetaErrorBoundary = 1     # 각도 명령 허용 오차
+ThetaErrorBoundary = 1     # 회전할 때 각도 명령 허용 오차
+
+angularAcc = 2.1        #[deg/s^2]
+linearXAcc = 0.06       #[m/s^2]
+linearYAcc = 0.3        #[m/s^2]
 ####################
+dt = 1 / Hz

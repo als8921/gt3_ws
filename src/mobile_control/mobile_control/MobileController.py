@@ -16,15 +16,14 @@ class ControlNode(Node):
     def __init__(self):
         super().__init__('mobile_control')
         self.create_subscription(Odometry, '/odom3', self.odom_callback, qos_profile=qos_profile_sensor_data)
-        self.create_subscription(Float32MultiArray, '/target', self.command_callback, 10)  # 목표 위치 및 자세 구독
-        self.ctrl_cmd_pub = self.create_publisher(CtrlCmd, 'ctrl_cmd', 10)
-        self.steering_cmd_pub = self.create_publisher(SteeringCtrlCmd, 'steering_ctrl_cmd', 10)
+        self.create_subscription(Float32MultiArray, '/target', self.command_callback, 10)
+        self.ctrl_cmd_pub = self.create_publisher(CtrlCmd, '/ctrl_cmd', 10)
+        self.steering_cmd_pub = self.create_publisher(SteeringCtrlCmd, '/steering_ctrl_cmd', 10)
         self.pub_arrival_flag = self.create_publisher(String, '/unity/cmd', 10)
         self.mobile_move_pub = self.create_publisher(Bool, '/mobile/move_flag', 10)
 
         self.timer = self.create_timer(1.0 / Hz, self.timer_callback)
 
-        ### Position 객체 ###
         self.Pos = Position()       # Robot의 Odom 위치
         self.StartPos = Position()  # 전진 명령을 시작할 때의 위치
         self.CmdPos = Command()    # 목표 위치
@@ -176,13 +175,12 @@ class ControlNode(Node):
                 _target_linear_speed = LinearXSpeedLimit(self.PControl(_error, Kp = LinearKp))
                 
                 if(_target_linear_speed > 0 and self.current_linear_speed < _target_linear_speed):
-                    self.current_linear_speed += 0.002  # 속도를 천천히 증가
+                    self.current_linear_speed += linearXAcc * dt
                 elif(_target_linear_speed < 0 and self.current_linear_speed > _target_linear_speed):
-                    self.current_linear_speed -= 0.002  # 속도를 천천히 감소
+                    self.current_linear_speed -= linearXAcc * dt
                 else:
                     self.current_linear_speed = _target_linear_speed
 
-                # 선속도를 목표 속도로 설정
                 self.PublishCtrlCmd(gear = Gear.Differential, linear_speed = LinearXSpeedLimit(self.current_linear_speed))
 
         elif self.state == State.MoveLateral:
@@ -213,14 +211,13 @@ class ControlNode(Node):
                     # 목표 선속도 계산 (최대 선속도로 제한)
                     _target_linear_speed = self.lateral_direction * LinearYSpeedLimit(self.PControl(_error, Kp = LinearKp))
                     
-                    # 선속도 점진적 증가 로직
                     if(_target_linear_speed > 0 and self.current_linear_speed < _target_linear_speed):
-                        self.current_linear_speed += 0.01  # 속도를 천천히 증가
+                        self.current_linear_speed += linearYAcc * dt
                     elif(_target_linear_speed < 0 and self.current_linear_speed > _target_linear_speed):
-                        self.current_linear_speed -= 0.01  # 속도를 천천히 감소
+                        self.current_linear_speed -= linearYAcc * dt
                     else:
                         self.current_linear_speed = _target_linear_speed
-                    # 선속도를 목표 속도로 설정
+
                     self.PublishCtrlCmd(gear = Gear.Lateral, linear_speed = LinearYSpeedLimit(self.current_linear_speed))
 
 
@@ -247,9 +244,9 @@ class ControlNode(Node):
         _target_angular_speed = self.PControl(_error, Kp = AngularKp)
 
         if(_target_angular_speed > 0 and self.current_angular_speed < _target_angular_speed):
-            self.current_angular_speed += 0.07  # 속도를 천천히 증가
+            self.current_angular_speed += angularAcc * dt
         elif(_target_angular_speed < 0 and self.current_angular_speed > _target_angular_speed):
-            self.current_angular_speed -= 0.07  # 속도를 천천히 감소
+            self.current_angular_speed -= angularAcc * dt
         else:
             self.current_angular_speed = _target_angular_speed
 
