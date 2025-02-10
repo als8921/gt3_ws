@@ -6,6 +6,7 @@ from ros_node import ROSNode
 
 import LaserScan.laserscan_transformation as laserscan_transformation
 import LaserScan.laserscan_clustering as laserscan_clustering
+
 class Controller:
     def __init__(self):
         self.ros_node = None
@@ -17,15 +18,37 @@ class Controller:
 
     def update(self):
         if(self.ros_node.front_scan and self.ros_node.rear_scan):
-                front_data, rear_data = laserscan_transformation.laser_scan_to_xy(self.ros_node.front_scan, self.ros_node.rear_scan, 0.3, 0.25)
+            front_data, rear_data = laserscan_transformation.laser_scan_to_xy(self.ros_node.front_scan, self.ros_node.rear_scan, 0.3, 0.25)
 
-                front_cluster = laserscan_clustering.clustering(*front_data, 0.1, 4)
-                rear_cluster = laserscan_clustering.clustering(*rear_data, 0.1, 4)
+            front_cluster = laserscan_clustering.clustering(*front_data, 0.1, 4)
+            rear_cluster = laserscan_clustering.clustering(*rear_data, 0.1, 4)
 
-                for idx, [x_list, y_list] in enumerate(front_cluster):
-                    if(idx == 0):
-                        pass
+            for idx, [x_list, y_list] in enumerate(front_cluster):
+                if idx == 0:
 
+                    avg_x = np.mean(x_list)
+                    avg_y = np.mean(y_list)
+
+                    distances = np.sqrt(np.square(x_list) + np.square(y_list))
+                    min_index = np.argmin(distances)
+                    print("FRONT LASERSCAN")
+                    print("평균 지점 : ", avg_x , avg_y)
+                    print("가장 가까운 거리 : ", np.min(distances))
+                    print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
+
+            
+            for idx, [x_list, y_list] in enumerate(rear_cluster):
+                if idx == 0:
+
+                    avg_x = np.mean(x_list)
+                    avg_y = np.mean(y_list)
+
+                    distances = np.sqrt(np.square(x_list) + np.square(y_list))
+                    min_index = np.argmin(distances)
+                    print("REAR LASERSCAN")
+                    print("평균 지점 : ", avg_x , avg_y)
+                    print("가장 가까운 거리 : ", np.min(distances))
+                    print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
 
     def run_ros_node(self):
         rclpy.init()
