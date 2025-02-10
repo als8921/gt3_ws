@@ -25,28 +25,25 @@ class Controller:
 
             for idx, [x_list, y_list] in enumerate(front_cluster):
                 if idx == 0:
-
                     avg_x = np.mean(x_list)
                     avg_y = np.mean(y_list)
 
                     distances = np.square(x_list) + np.square(y_list)
                     min_index = np.argmin(distances)
                     print("FRONT LASERSCAN")
-                    print("평균 지점 : ", avg_x , avg_y)
+                    print("평균 지점 : ", avg_x, avg_y)
                     print("가장 가까운 거리 : ", np.sqrt(np.min(distances)))
                     print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
 
-            
             for idx, [x_list, y_list] in enumerate(rear_cluster):
                 if idx == 0:
-
                     avg_x = np.mean(x_list)
                     avg_y = np.mean(y_list)
 
                     distances = np.square(x_list) + np.square(y_list)
                     min_index = np.argmin(distances)
                     print("REAR LASERSCAN")
-                    print("평균 지점 : ", avg_x , avg_y)
+                    print("평균 지점 : ", avg_x, avg_y)
                     print("가장 가까운 거리 : ", np.sqrt(np.min(distances)))
                     print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
 
@@ -57,6 +54,11 @@ class Controller:
 
 if __name__ == '__main__':
     controller = Controller()
-    while rclpy.ok():
-        controller.update()
-    rclpy.shutdown()
+    try:
+        while rclpy.ok():
+            controller.update()
+    except KeyboardInterrupt:
+        print("프로그램 종료 중")
+    finally:
+        rclpy.shutdown()
+        print("프로그램 종료 완료")
