@@ -3,6 +3,7 @@ import threading
 import time
 import numpy as np
 from ros_node import ROSNode
+from std_msgs.msg import Float32MultiArray  # Float32MultiArray 임포트
 
 import LaserScan.laserscan_transformation as laserscan_transformation
 import LaserScan.laserscan_clustering as laserscan_clustering
@@ -12,6 +13,9 @@ class Controller:
         self.ros_node = None
         self.ros_thread = threading.Thread(target=self.run_ros_node)
         self.ros_thread.start()
+        
+        self.front_info_pub = self.ros_node.create_publisher(Float32MultiArray, '/front_scan/info', 10)
+        self.rear_info_pub = self.ros_node.create_publisher(Float32MultiArray, '/rear_scan/info', 10)
 
         while self.ros_node is None:
             time.sleep(0.1)
@@ -25,27 +29,37 @@ class Controller:
 
             for idx, [x_list, y_list] in enumerate(front_cluster):
                 if idx == 0:
-                    avg_x = np.mean(x_list)
-                    avg_y = np.mean(y_list)
+                    avg_x = np.round(np.mean(x_list), 3)  # 소수점 3째 자리에서 반올림
+                    avg_y = np.round(np.mean(y_list), 3)  # 소수점 3째 자리에서 반올림
 
                     distances = np.square(x_list) + np.square(y_list)
+                    min_distance = np.round(np.sqrt(np.min(distances)), 3)  # 소수점 3째 자리에서 반올림
                     min_index = np.argmin(distances)
+
                     print("FRONT LASERSCAN")
                     print("평균 지점 : ", avg_x, avg_y)
-                    print("가장 가까운 거리 : ", np.sqrt(np.min(distances)))
+                    print("가장 가까운 거리 : ", min_distance)
                     print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
+
+                    msg = Float32MultiArray(data = [avg_x, avg_y, min_distance])
+                    self.front_info_pub.publish(msg)
 
             for idx, [x_list, y_list] in enumerate(rear_cluster):
                 if idx == 0:
-                    avg_x = np.mean(x_list)
-                    avg_y = np.mean(y_list)
+                    avg_x = np.round(np.mean(x_list), 3)  # 소수점 3째 자리에서 반올림
+                    avg_y = np.round(np.mean(y_list), 3)  # 소수점 3째 자리에서 반올림
 
                     distances = np.square(x_list) + np.square(y_list)
+                    min_distance = np.round(np.sqrt(np.min(distances)), 3)  # 소수점 3째 자리에서 반올림
                     min_index = np.argmin(distances)
+
                     print("REAR LASERSCAN")
                     print("평균 지점 : ", avg_x, avg_y)
-                    print("가장 가까운 거리 : ", np.sqrt(np.min(distances)))
+                    print("가장 가까운 거리 : ", min_distance)
                     print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
+
+                    msg = Float32MultiArray(data = [avg_x, avg_y, min_distance])
+                    self.rear_info_pub.publish(msg)
 
     def run_ros_node(self):
         rclpy.init()
