@@ -67,6 +67,9 @@ class CommandPositionPublisher(Node):
             # wall;[1, (-0.55, 0.00, 1.99), (0.96, 0.00, 2.12), (0.96, 0.74, 2.12)],[2, (0.92, 0.00, 0.05), (-0.5, 0.00, 0.03), (0.92, 0.82, 0.05)]
             cmd = msg.data.split(';')
             if cmd[0] == 'wall':
+                self.D_horizontal = SettingJson.load_setting("mobile", "horizontal_distance")    # [m] 작업 위치 수평 거리
+                self.D_vertical = SettingJson.load_setting("mobile", "verticle_distance")        # [m] 작업 위치 수직 거리   
+                self.D_task = SettingJson.load_setting("mobile", "task_distance")                # [m] 작업 사이의 거리
 
                 data_list = eval("[" + cmd[1] + "]")
 
