@@ -3,7 +3,7 @@ import threading
 import time
 import numpy as np
 from ros_node import ROSNode
-from std_msgs.msg import Float32MultiArray  # Float32MultiArray 임포트
+from std_msgs.msg import Float32MultiArray
 
 import LaserScan.laserscan_transformation as laserscan_transformation
 import LaserScan.laserscan_clustering as laserscan_clustering
@@ -29,11 +29,11 @@ class Controller:
 
             for idx, [x_list, y_list] in enumerate(front_cluster):
                 if idx == 0:
-                    avg_x = np.round(np.mean(x_list), 3)  # 소수점 3째 자리에서 반올림
-                    avg_y = np.round(np.mean(y_list), 3)  # 소수점 3째 자리에서 반올림
+                    avg_x = np.round(np.mean(x_list), 3)
+                    avg_y = np.round(np.mean(y_list), 3)
 
                     distances = np.square(x_list) + np.square(y_list)
-                    min_distance = np.round(np.sqrt(np.min(distances)), 3)  # 소수점 3째 자리에서 반올림
+                    min_distance = np.round(np.sqrt(np.min(distances)), 3)
                     min_index = np.argmin(distances)
 
                     print("FRONT LASERSCAN")
@@ -46,11 +46,11 @@ class Controller:
 
             for idx, [x_list, y_list] in enumerate(rear_cluster):
                 if idx == 0:
-                    avg_x = np.round(np.mean(x_list), 3)  # 소수점 3째 자리에서 반올림
-                    avg_y = np.round(np.mean(y_list), 3)  # 소수점 3째 자리에서 반올림
+                    avg_x = np.round(np.mean(x_list), 3)
+                    avg_y = np.round(np.mean(y_list), 3)
 
                     distances = np.square(x_list) + np.square(y_list)
-                    min_distance = np.round(np.sqrt(np.min(distances)), 3)  # 소수점 3째 자리에서 반올림
+                    min_distance = np.round(np.sqrt(np.min(distances)), 3)
                     min_index = np.argmin(distances)
 
                     print("REAR LASERSCAN")
