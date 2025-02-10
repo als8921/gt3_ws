@@ -29,11 +29,11 @@ class Controller:
                     avg_x = np.mean(x_list)
                     avg_y = np.mean(y_list)
 
-                    distances = np.sqrt(np.square(x_list) + np.square(y_list))
+                    distances = np.square(x_list) + np.square(y_list)
                     min_index = np.argmin(distances)
                     print("FRONT LASERSCAN")
                     print("평균 지점 : ", avg_x , avg_y)
-                    print("가장 가까운 거리 : ", np.min(distances))
+                    print("가장 가까운 거리 : ", np.sqrt(np.min(distances)))
                     print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
 
             
@@ -43,11 +43,11 @@ class Controller:
                     avg_x = np.mean(x_list)
                     avg_y = np.mean(y_list)
 
-                    distances = np.sqrt(np.square(x_list) + np.square(y_list))
+                    distances = np.square(x_list) + np.square(y_list)
                     min_index = np.argmin(distances)
                     print("REAR LASERSCAN")
                     print("평균 지점 : ", avg_x , avg_y)
-                    print("가장 가까운 거리 : ", np.min(distances))
+                    print("가장 가까운 거리 : ", np.sqrt(np.min(distances)))
                     print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
 
     def run_ros_node(self):
