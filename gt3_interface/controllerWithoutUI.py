@@ -70,11 +70,7 @@ if __name__ == '__main__':
     controller = Controller()
     try:
         while rclpy.ok():
-            loop_start_time = time.time()  # 루프 시작 시간 기록
             controller.update()
-            loop_end_time = time.time()  # 루프 종료 시간 기록
-            loop_duration = loop_end_time - loop_start_time  # 루프 시간 계산
-            print(f"루프 실행 시간: {loop_duration:.10f} 초")
     except KeyboardInterrupt:
         print("프로그램 종료 중")
     finally:
