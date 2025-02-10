@@ -1,7 +1,7 @@
 import rclpy
 import numpy as np
 from rclpy.node import Node
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float32MultiArray
 from sensor_msgs.msg import PointCloud2, LaserScan
 from nav_msgs.msg import Odometry
 
@@ -14,8 +14,14 @@ class ROSNode(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
-        self.mobile_move_pub = self.create_publisher(Bool, '/mobile/move_flag', 10)
 
+
+        ##### PUBLISH
+        self.mobile_move_pub = self.create_publisher(Bool, '/mobile/move_flag', 10)
+        self.front_info_pub = self.create_publisher(Float32MultiArray, '/front_scan/info', 10)
+        self.rear_info_pub = self.create_publisher(Float32MultiArray, '/rear_scan/info', 10)
+
+        ##### SUBSCRIBE
         self.mobile_arrival_sub = self.create_subscription(Bool, '/mobile/arrival_flag', self.mobile_arrived_callback, 10)
         self.pointcloud_sub = self.create_subscription(PointCloud2, '/pointcloud_topic', self.point_cloud_callback, 10)
         self.odom_sub = self.create_subscription(Odometry, '/odom3', self.odom_callback, 10)
@@ -32,6 +38,12 @@ class ROSNode(Node):
         # LaserScan 데이터 저장
         self.rear_scan = None
         self.front_scan = None
+
+    def front_scan_info_pub(self, msg):
+        self.front_info_pub.publish(Float32MultiArray(data = msg))
+
+    def rear_scan_info_pub(self, msg):
+        self.rear_info_pub.publish(Float32MultiArray(data = msg))
 
     def mobile_arrived_callback(self, msg):
         self.isArrived = msg.data

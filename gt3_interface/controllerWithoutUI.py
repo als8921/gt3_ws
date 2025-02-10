@@ -14,8 +14,6 @@ class Controller:
         self.ros_thread = threading.Thread(target=self.run_ros_node)
         self.ros_thread.start()
         
-        self.front_info_pub = self.ros_node.create_publisher(Float32MultiArray, '/front_scan/info', 10)
-        self.rear_info_pub = self.ros_node.create_publisher(Float32MultiArray, '/rear_scan/info', 10)
 
         while self.ros_node is None:
             time.sleep(0.1)
@@ -41,8 +39,7 @@ class Controller:
                     print("가장 가까운 거리 : ", min_distance)
                     print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
 
-                    msg = Float32MultiArray(data = [avg_x, avg_y, min_distance])
-                    self.front_info_pub.publish(msg)
+                    self.ros_node.front_scan_info_pub([avg_x, avg_y, min_distance])
 
             for idx, [x_list, y_list] in enumerate(rear_cluster):
                 if idx == 0:
@@ -58,8 +55,7 @@ class Controller:
                     print("가장 가까운 거리 : ", min_distance)
                     print("가장 가까운 점 : ", x_list[min_index], y_list[min_index])
 
-                    msg = Float32MultiArray(data = [avg_x, avg_y, min_distance])
-                    self.rear_info_pub.publish(msg)
+                    self.ros_node.rear_scan_info_pub([avg_x, avg_y, min_distance])
 
     def run_ros_node(self):
         rclpy.init()
