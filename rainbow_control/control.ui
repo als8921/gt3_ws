@@ -532,7 +532,7 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QTextEdit" name="move_speed">
+   <widget class="QTextEdit" name="moveL_speed">
     <property name="geometry">
      <rect>
       <x>680</x>
@@ -542,7 +542,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="move_acc">
+   <widget class="QTextEdit" name="moveL_acc">
     <property name="geometry">
      <rect>
       <x>790</x>
@@ -552,7 +552,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="move_acc_2">
+   <widget class="QTextEdit" name="moveJ_acc">
     <property name="geometry">
      <rect>
       <x>790</x>
@@ -562,7 +562,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="move_speed_2">
+   <widget class="QTextEdit" name="moveJ_speed">
     <property name="geometry">
      <rect>
       <x>680</x>
@@ -572,7 +572,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="move_acc_3">
+   <widget class="QTextEdit" name="moveJL_acc">
     <property name="geometry">
      <rect>
       <x>790</x>
@@ -582,7 +582,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="move_speed_3">
+   <widget class="QTextEdit" name="moveJL_speed">
     <property name="geometry">
      <rect>
       <x>680</x>
@@ -592,7 +592,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="move_acc_4">
+   <widget class="QTextEdit" name="moveJB_acc">
     <property name="geometry">
      <rect>
       <x>840</x>
@@ -602,7 +602,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="move_speed_4">
+   <widget class="QTextEdit" name="moveJB_speed">
     <property name="geometry">
      <rect>
       <x>730</x>
@@ -1493,7 +1493,7 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QTextEdit" name="movePB_speed_2">
+   <widget class="QTextEdit" name="moveITPL_speed">
     <property name="geometry">
      <rect>
       <x>570</x>
