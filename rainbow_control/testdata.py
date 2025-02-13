@@ -1,3 +1,6 @@
+joint_home = [2.818591356277466, -56.73796844482422, 145.26318359375, 91.54896545410156, -87.1413803100586, -0.10855797678232193]
+point_home = [179.99232482910156, -150.4761199951172, 429.8295593261719, 179.93360900878906, -0.04965001717209816, -90.01122283935547]
+
 joint_default = [-0.0006609432748518884, 1.3334376811981201, 88.64949035644531, 90.0170669555664, -90.00294494628906, 0.004908756352961063]
 point_default = [700.0194702148438, -152.99000549316406, 692.2797241210938, -180.0, -0.10999999940395355, -89.94000244140625]
 
@@ -18,8 +21,8 @@ joint_left_bottom = [61.57543182373047, 42.06501770019531, 95.04718780517578, 42
 point_left_bottom = [630.2316284179688, 630.10302734375, 116.2098388671875, 179.9927215576172, -0.09673028439283371, -89.96182250976562]
 
 # 리스트의 리스트 형태로 변환
-joint_list = [joint_right_bottom, joint_right_top, joint_left_top, joint_left_bottom, joint_default]
-point_list = [point_right_bottom, point_right_top, point_left_top, point_left_bottom, point_default]
+joint_list = [joint_right_bottom, joint_right_top, joint_left_top, joint_left_bottom]
+point_list = [point_right_bottom, point_right_top, point_left_top, point_left_bottom]
 
 # # 결과 출력
 # print("Joint List")

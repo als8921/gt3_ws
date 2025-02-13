@@ -32,6 +32,7 @@ class QtController(QMainWindow):
         self.Connect_Button : QPushButton
         self.getPosition_Button : QPushButton
         self.Quit_Button : QPushButton
+        self.Home_Button : QPushButton
 
         self.moveL_Button : QPushButton
         self.moveJ_Button : QPushButton
@@ -144,6 +145,8 @@ class QtController(QMainWindow):
         # Button
         self.Quit_Button.clicked.connect(self.quit)
         self.Connect_Button.clicked.connect(self.start_thread)
+        self.Home_Button.clicked.connect(self.MOVE_HOME)
+
         self.getPosition_Button.clicked.connect(self.getCurrentPosition)
         self.moveL_Button.clicked.connect(self.MOVE_L)
         self.moveJ_Button.clicked.connect(self.MOVE_J)
@@ -161,6 +164,10 @@ class QtController(QMainWindow):
         self.moveITPL_Clear_Button.clicked.connect(self.CLEAR_ITPL)
         self.moveITPL_Add_Button.clicked.connect(self.ADD_ITPL)
 
+    def MOVE_HOME(self):
+        pos = testdata.point_home
+        MoveJL(pos, 100, 100)
+        
     def MOVE_L(self):
         pos = self.getPointFromText(self.MOVE_L_POS)
         try:

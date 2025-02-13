@@ -6,4 +6,4 @@
 *.pyc
 __pycache__/
 
-pointcloud_data/
+# pointcloud_data/
