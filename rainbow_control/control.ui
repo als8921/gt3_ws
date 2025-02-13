@@ -1553,17 +1553,7 @@
     </item>
     <item>
      <property name="text">
-      <string>RESERVED1</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
       <string>SMOOTH</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>RESERVED2</string>
      </property>
     </item>
     <item>
@@ -1578,12 +1568,22 @@
     </item>
     <item>
      <property name="text">
-      <string>RESERVED3</string>
+      <string>CA_SMOOTH</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>CA_SMOOTH</string>
+      <string>RESERVED1</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>RESERVED2</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>RESERVED3</string>
      </property>
     </item>
    </widget>
@@ -1672,7 +1672,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="movePB_Add_Button_2">
+   <widget class="QPushButton" name="moveITPL_Add_Button">
     <property name="geometry">
      <rect>
       <x>120</x>

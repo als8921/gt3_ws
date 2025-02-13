@@ -40,10 +40,17 @@ class QtController(QMainWindow):
         self.moveJB_Add_Button : QPushButton
         self.moveJB_Clear_Button : QPushButton
         self.movePB_Button : QPushButton
+        self.movePB_Clear_Button : QPushButton
+        self.movePB_Add_Button : QPushButton
         self.moveITPL_Button : QPushButton
+        self.moveITPL_Clear_Button : QPushButton
+        self.moveITPL_Add_Button : QPushButton
 
         # ComboBox
         self.robotReal : QComboBox
+        self.movePB_OPTION : QComboBox
+        self.movePB_RTYPE : QComboBox
+        self.moveITPL_RTYPE : QComboBox
 
         # TextEdit
         self.position_text : QTextEdit
@@ -106,6 +113,8 @@ class QtController(QMainWindow):
         self.movePB_acc : QTextEdit
         self.moveITPL_acc : QTextEdit
 
+        self.movePB_quantity : QTextEdit
+
         # Label
         self.status_label : QLabel
 
@@ -144,8 +153,13 @@ class QtController(QMainWindow):
         self.moveJB_Add_Button.clicked.connect(self.ADD_JB)
 
 
-        self.movePB_Button.clicked.connect(lambda : self.getPointFromText(self.MOVE_PB_POS))
-        self.moveITPL_Button.clicked.connect(lambda : self.getPointFromText(self.MOVE_ITPL_POS))
+        self.movePB_Button.clicked.connect(self.MOVE_PB)
+        self.movePB_Clear_Button.clicked.connect(self.CLEAR_PB)
+        self.movePB_Add_Button.clicked.connect(self.ADD_PB)
+
+        self.moveITPL_Button.clicked.connect(self.MOVE_ITPL)
+        self.moveITPL_Clear_Button.clicked.connect(self.CLEAR_ITPL)
+        self.moveITPL_Add_Button.clicked.connect(self.ADD_ITPL)
 
     def MOVE_L(self):
         pos = self.getPointFromText(self.MOVE_L_POS)
@@ -154,6 +168,7 @@ class QtController(QMainWindow):
             acc = float(self.moveL_acc.toPlainText())
         except:
             print("speed, acc 데이터 오류")
+            return
         MoveL(pos, speed, acc)
 
     def MOVE_J(self):
@@ -163,6 +178,7 @@ class QtController(QMainWindow):
             acc = float(self.moveJ_acc.toPlainText())
         except:
             print("speed, acc 데이터 오류")
+            return
         MoveJ(pos, speed, acc)
     
     def MOVE_JL(self):
@@ -172,14 +188,17 @@ class QtController(QMainWindow):
             acc = float(self.moveJL_acc.toPlainText())
         except:
             print("speed, acc 데이터 오류")
+            return
         MoveJL(pos, speed, acc)
 
+    ############# MOVE_JB #############
     def MOVE_JB(self):
         try:
             speed = float(self.moveJB_speed.toPlainText())
             acc = float(self.moveJB_acc.toPlainText())
         except:
             print("speed, acc 데이터 오류")
+            return
         MoveJB_Run(speed, acc)
     
     def ADD_JB(self):
@@ -192,6 +211,86 @@ class QtController(QMainWindow):
 
     def CLEAR_JB(self):
         MoveJB_Clear()
+
+    ############# MOVE_PB #############
+    def MOVE_PB(self):
+        try:
+            acc = float(self.movePB_acc.toPlainText())
+        except:
+            print("acc 데이터 오류")
+            return
+    
+        rtype = BLEND_RTYPE.INTENDED
+        if(self.movePB_RTYPE.currentText() == "INTENDED"):
+            rtype = BLEND_RTYPE.INTENDED
+        elif(self.movePB_RTYPE.currentText() == "CONSTANT"):
+            rtype = BLEND_RTYPE.CONSTANT
+        MoveJB_Run(acc, rtype)
+
+
+    def ADD_PB(self):
+        pos = self.getPointFromText(self.MOVE_PB_POS)
+        speed = float(self.movePB_speed.toPlainText())
+        option = BLEND_OPTION.RATIO
+        if(self.movePB_OPTION.currentText() == "RATIO"):
+            option = BLEND_OPTION.RATIO
+        elif(self.movePB_OPTION.currentText() == "DISTANCE"):
+            option = BLEND_OPTION.DISTANCE
+
+        quantity = float(self.movePB_quantity.toPlainText())
+        print(pos, speed, option, quantity)
+        MovePB_Add(pos, speed, option, quantity)
+
+        ### TEST
+        # for point in testdata.point_list:
+        #     MovePB_Add(*joint)
+
+    def CLEAR_PB(self):
+        MovePB_Clear()
+        
+    ############# MOVE_ITPL #############
+    def MOVE_ITPL(self):
+        try:
+            acc = float(self.moveITPL_acc.toPlainText())
+        except:
+            print("acc 데이터 오류")
+            return
+        
+        rtype = ITPL_RTYPE.INTENDED
+        if(self.moveITPL_RTYPE.currentText() == "INTENDED"):
+            rtype = ITPL_RTYPE.INTENDED
+        elif(self.moveITPL_RTYPE.currentText() == "CONSTANT"):
+            rtype = ITPL_RTYPE.CONSTANT
+        elif(self.moveITPL_RTYPE.currentText() == "SMOOTH"):
+            rtype = ITPL_RTYPE.SMOOTH
+        elif(self.moveITPL_RTYPE.currentText() == "CA_INTENDED"):
+            rtype = ITPL_RTYPE.CA_INTENDED
+        elif(self.moveITPL_RTYPE.currentText() == "CA_CONSTANT"):
+            rtype = ITPL_RTYPE.CA_CONSTANT
+        elif(self.moveITPL_RTYPE.currentText() == "CA_SMOOTH"):
+            rtype = ITPL_RTYPE.CA_SMOOTH
+        elif(self.moveITPL_RTYPE.currentText() == "RESERVED1"):
+            rtype = ITPL_RTYPE.RESERVED1
+        elif(self.moveITPL_RTYPE.currentText() == "RESERVED2"):
+            rtype = ITPL_RTYPE.RESERVED2
+        elif(self.moveITPL_RTYPE.currentText() == "RESERVED3"):
+            rtype = ITPL_RTYPE.RESERVED3
+
+        MoveITPL_Run(acc, rtype)
+
+
+    def ADD_ITPL(self):
+        pos = self.getPointFromText(self.MOVE_ITPL_POS)
+        try:
+            speed = float(self.moveITPL_speed.toPlainText())
+        except:
+            print("speed 데이터 오류")
+            return
+        MoveITPL_Add(pos, speed)
+
+    def CLEAR_ITPL(self):
+        MoveITPL_Clear()
+
 
     def dataReset(self):
         if(IsCommandSockConnect() & IsDataSockConnect()):
