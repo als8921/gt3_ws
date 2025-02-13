@@ -203,11 +203,11 @@ class QtController(QMainWindow):
     
     def ADD_JB(self):
         pos = self.getJointFromText(self.MOVE_JB_POS)
-        MoveJB_Add(pos)
+        # MoveJB_Add(pos)
 
-        ### TEST
-        # for joint in testdata.joint_list:
-        #     MoveJB_Add(*joint)
+        ## TEST
+        for joint in testdata.joint_list:
+            MoveJB_Add(*joint)
 
     def CLEAR_JB(self):
         MoveJB_Clear()
@@ -225,25 +225,30 @@ class QtController(QMainWindow):
             rtype = BLEND_RTYPE.INTENDED
         elif(self.movePB_RTYPE.currentText() == "CONSTANT"):
             rtype = BLEND_RTYPE.CONSTANT
-        MoveJB_Run(acc, rtype)
+        MovePB_Run(acc, rtype)
 
 
     def ADD_PB(self):
         pos = self.getPointFromText(self.MOVE_PB_POS)
-        speed = float(self.movePB_speed.toPlainText())
+        try:
+            speed = float(self.movePB_speed.toPlainText())
+            quantity = float(self.movePB_quantity.toPlainText())
+        except:
+            print("speed, quantity 데이터 오류")
+            return
+        
         option = BLEND_OPTION.RATIO
         if(self.movePB_OPTION.currentText() == "RATIO"):
             option = BLEND_OPTION.RATIO
         elif(self.movePB_OPTION.currentText() == "DISTANCE"):
             option = BLEND_OPTION.DISTANCE
 
-        quantity = float(self.movePB_quantity.toPlainText())
-        print(pos, speed, option, quantity)
-        MovePB_Add(pos, speed, option, quantity)
+        ### REAL
+        # MovePB_Add(pos, speed, option, quantity)
 
         ### TEST
-        # for point in testdata.point_list:
-        #     MovePB_Add(*joint)
+        for point in testdata.point_list:
+            MovePB_Add(*point, speed, option, quantity)
 
     def CLEAR_PB(self):
         MovePB_Clear()
@@ -286,7 +291,12 @@ class QtController(QMainWindow):
         except:
             print("speed 데이터 오류")
             return
-        MoveITPL_Add(pos, speed)
+        # MoveITPL_Add(pos, speed)
+
+        ### TEST
+        for point in testdata.point_list:
+            MoveITPL_Add(*point, speed)
+
 
     def CLEAR_ITPL(self):
         MoveITPL_Clear()

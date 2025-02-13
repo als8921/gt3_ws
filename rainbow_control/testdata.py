@@ -18,8 +18,8 @@ joint_left_bottom = [61.57543182373047, 42.06501770019531, 95.04718780517578, 42
 point_left_bottom = [630.2316284179688, 630.10302734375, 116.2098388671875, 179.9927215576172, -0.09673028439283371, -89.96182250976562]
 
 # 리스트의 리스트 형태로 변환
-joint_list = [joint_default, joint_right_bottom, joint_right_top, joint_left_top, joint_left_bottom, joint_default]
-point_list = [point_default, point_right_bottom, point_right_top, point_left_top, point_left_bottom, point_default]
+joint_list = [joint_right_bottom, joint_right_top, joint_left_top, joint_left_bottom, joint_default]
+point_list = [point_right_bottom, point_right_top, point_left_top, point_left_bottom, point_default]
 
 # # 결과 출력
 # print("Joint List")
