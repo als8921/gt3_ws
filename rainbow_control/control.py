@@ -274,12 +274,6 @@ class QtController(QMainWindow):
             rtype = ITPL_RTYPE.CA_CONSTANT
         elif(self.moveITPL_RTYPE.currentText() == "CA_SMOOTH"):
             rtype = ITPL_RTYPE.CA_SMOOTH
-        elif(self.moveITPL_RTYPE.currentText() == "RESERVED1"):
-            rtype = ITPL_RTYPE.RESERVED1
-        elif(self.moveITPL_RTYPE.currentText() == "RESERVED2"):
-            rtype = ITPL_RTYPE.RESERVED2
-        elif(self.moveITPL_RTYPE.currentText() == "RESERVED3"):
-            rtype = ITPL_RTYPE.RESERVED3
 
         MoveITPL_Run(acc, rtype)
 
